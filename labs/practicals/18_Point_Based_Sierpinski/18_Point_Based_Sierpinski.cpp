@@ -28,7 +28,7 @@ void create_sierpinski(geometry &geom) {
   for (auto i = 1; i < num_points; ++i) {
     // *********************************
     // Add random point
-	  points.push_back(//GASKET ALGORITHM GOES HERE
+	  points.push_back(
     // Add colour - all points red
 	  colours.push_back(vec4(1.0f, 0.0f, 0.0f, 1.0f));
     // *********************************

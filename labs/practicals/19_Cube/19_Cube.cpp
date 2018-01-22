@@ -14,26 +14,28 @@ float rho = 0.0f;
 bool load_content() {
   // Create cube data - twelve triangles triangles
   // Positions
-  vector<vec3> positions{
-      // *********************************
-      // Add the position data for triangles here, (6 verts per side)
-      // Front
-
-
-      // Back
-
-
-      // Right
-
-
-      // Left
-
-
-      // Top
-
-
-      // Bottom
-
+	vector<vec3> positions{
+		// *********************************
+		// Add the position data for triangles here, (6 verts per side)
+		// Front
+		vec3(1.0f, 1.0f, 2.0f), vec3(-1.0f,1.0f,2.0f), vec3(-1.0f,-1.0f,2.0f),
+		vec3(-1.0f,-1.0f,2.0f), vec3(1.0f,-1.0f,2.0f), vec3(1.0f,1.0f,2.0f),
+		// Back
+		vec3(-1.0f, 1.0f, 0.0f), vec3(1.0f,1.0f,0.0f), vec3(1.0f,-1.0f,0.0f),
+		vec3(1.0f,-1.0f,0.0f), vec3(-1.0f,-1.0f,0.0f), vec3(-1.0f,1.0f,0.0f),
+		// Right
+		vec3(1.0f,1.0f,0.0f), vec3(1.0f,1.0f,2.0f), vec3(1.0f,-1.0f,2.0f),
+		vec3(1.0f,-1.0f,2.0f), vec3(1.0f,-1.0f,0.0f), vec3(1.0f,1.0f,0.0f),
+		// Left
+		vec3(-1.0f,-1.0f,0.0f), vec3(-1.0f,-1.0f,2.0f), vec3(-1.0f,1.0f,2.0f),
+		vec3(-1.0f,1.0f,2.0f), vec3(-1.0f,1.0f,0.0f), vec3(-1.0f,-1.0f,0.0f),
+		// Top
+		vec3(-1.0f,-1.0f,0.0f), vec3(1.0f,-1.0f,0.0f), vec3(1.0f,-1.0f,2.0f),
+		vec3(1.0f,-1.0f,2.0f), vec3(-1.0f, -1.0f, 2.0f), vec3(-1.0f,-1.0f,0.0f),
+		// Bottom
+		vec3(-1.0f,1.0f,0.0f), vec3(-1.0f,1.0f,2.0f), vec3(1.0f,1.0f,2.0f),
+		vec3(1.0f,1.0f,2.0f), vec3(1.0f,1.0f,0.0f), vec3(-1.0f,1.0f,0.0f)
+			  
 
       // *********************************
   };
@@ -58,6 +60,7 @@ bool load_content() {
   auto aspect = static_cast<float>(renderer::get_screen_width()) / static_cast<float>(renderer::get_screen_height());
   cam.set_projection(quarter_pi<float>(), aspect, 2.414f, 1000.0f);
   return true;
+  
 }
 
 bool update(float delta_time) {
