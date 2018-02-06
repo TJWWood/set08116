@@ -18,12 +18,17 @@ void divide_triangle(const vector<vec3> &points, int divisions, vector<vec3> &po
   if (divisions > 0) {
     // *********************************
     // Calculate new vertices to work on (Normalize each element!)
-
-
+	  vec3 v0(points[0] + points[1]);
+	  vec3 v1(points[0] + points[2]);
+	  vec3 v2(points[0] + points[2]);
+	  normalize(v0);
+	  normalize(v1);
+	  normalize(v2);
     // Divide new triangles
-
-
-
+	  divide_triangle({ points[0], v0, points[1] }, divisions - 1, positions, colours);
+	  divide_triangle({ points[1], v1, points[2] }, divisions - 1, positions, colours);
+	  divide_triangle({ points[2], v2, points[0] }, divisions - 1, positions, colours);
+	  divide_triangle({ v0, v2, v1 }, divisions - 1, positions, colours);
 
     // *********************************
   } else {

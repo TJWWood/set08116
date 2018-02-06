@@ -60,7 +60,7 @@ bool render() {
                      value_ptr(MVP));                 // Pointer to matrix data
   // *********************************
   // Set the colour value for the shader here (Hint: rep the Brand, use the NapierRed macro)
-
+   
   // *********************************
 
   // Render the mesh
