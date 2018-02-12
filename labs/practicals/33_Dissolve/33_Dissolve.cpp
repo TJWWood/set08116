@@ -72,9 +72,10 @@ bool render() {
 
   // *********************************
   // Set the dissolve_factor uniform value
-
+  dissolve_factor = 0;
   // Bind the two textures - use different index for each
-
+  renderer::bind(tex[0], 0);
+  renderer::bind(tex[1], 1);
 
   // Set the uniform values for textures - use correct index
 

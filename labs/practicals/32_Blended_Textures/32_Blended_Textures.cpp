@@ -76,9 +76,9 @@ bool render() {
 
   // *********************************
   // Bind the three textures - use different index for each
-
-
-
+	renderer::bind(texs[0], 0);
+	renderer::bind(texs[1], 1);
+	renderer::bind(texs[2], 2);
   // *********************************
 
   // Set the uniform values for textures

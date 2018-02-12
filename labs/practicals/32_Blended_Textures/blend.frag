@@ -13,11 +13,11 @@ layout(location = 0) out vec4 colour;
 void main() {
   // *********************************
   // Sample the two main textures
-
-
+  vec4 col1 = texture(tex[0], tex_coord);
+  vec4 col2 = texture(tex[1], tex_coord);
   // Sample the blend texture
-
+  blend = texture(blend_map, tex_coord);
   // Mix the main samples using r component from blend value
-
+  colour = mix(col1, col2, blend.r);
   // *********************************
 }
