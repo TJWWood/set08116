@@ -9,6 +9,9 @@ std::array<mesh, 3> meshes;
 std::array<texture, 3> textures;
 effect eff;
 mesh plane_mesh;
+mesh box1;
+mesh box2;
+mesh box3;
 texture plane_tex;
 target_camera cam;
 
@@ -18,15 +21,15 @@ bool load_content() {
 
   // *********************************
   // Create Three Identical Box Meshes
-
-
-
+  box1 = mesh(geometry_builder::create_box());
+  box2 = mesh(geometry_builder::create_box());
+  box3 = mesh(geometry_builder::create_box());
   // Move Box One to (0,1,0)
-
+  box1.get_transform().position = vec3(0.0f, 1.0f, 0.0f);
   // Move Box Two to (0,0,1)
-
+  box2.get_transform().position = vec3(0.0f, 0.0f, 1.0f);
   // Move Box Three to (0,1,0)
-
+  box3.get_transform().position = vec3(0.0f, 1.0f, 0.0f);
   // *********************************
 
   // Load texture
@@ -52,11 +55,11 @@ bool load_content() {
 bool update(float delta_time) {
   // *********************************
   // rotate Box one on Y axis by delta_time
-
+	box1.get_transform().rotate(vec3(0.0f, delta_time, 0.0f));
   // rotate Box Two on Z axis by delta_time
-
+	box2.get_transform().rotate(vec3(0.0f, 0.0f, delta_time));
   // rotate Box Three on Y axis by delta_time
-
+	box3.get_transform().rotate(vec3(0.0f, delta_time, 0.0f));
   // *********************************
   // Update the camera
   cam.update(delta_time);
@@ -78,7 +81,7 @@ bool render() {
   for (size_t i = 0; i < meshes.size(); i++) {
     // *********************************
     // SET M to be the usual mesh  transform matrix
-
+	  mat4 M = PV;
     // *********************************
 
     // Apply the heirarchy chain

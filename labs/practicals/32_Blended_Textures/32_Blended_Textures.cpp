@@ -43,7 +43,7 @@ bool load_content() {
   texs[0] = texture("textures/grass.jpg");
   texs[1] = texture("textures/stonygrass.jpg");
   // Load blend map, try both blend_map1.png and blend_map2.jpg
-  blend_map = texture("textures/blend_map1.png");
+  blend_map = texture("textures/blend_map.jpg");
 
   // Set camera properties
   cam.set_position(vec3(0.0f, 0.0f, 30.0f));
@@ -84,7 +84,7 @@ bool render() {
   // Set the uniform values for textures
   static int tex_indices[] = {0, 1};
   glUniform1iv(eff.get_uniform_location("tex"), 2, tex_indices);
-  glUniform1i(eff.get_uniform_location("blend"), 2);
+  glUniform1i(eff.get_uniform_location("blend_map"), 2);
 
   // Render the mesh
   renderer::render(m);

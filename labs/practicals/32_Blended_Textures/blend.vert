@@ -5,9 +5,9 @@ uniform mat4 MVP;
 // *********************************
 // Declare incoming values
 // 0 - position
-
+position vec2 (0.0f, 0.0f);
 // 10 - tex_coord_in
-
+tex_coord_in vec2 (10.0f, 0.0f);
 // *********************************
 
 // Outgoing value

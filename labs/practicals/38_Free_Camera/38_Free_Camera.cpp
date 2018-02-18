@@ -11,13 +11,14 @@ texture tex;
 free_camera cam;
 double cursor_x = 0.0;
 double cursor_y = 0.0;
+GLFWwindow* window; 
 
 bool initialise() {
   // *********************************
   // Set input mode - hide the cursor
-
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
   // Capture initial mouse position
-
+	glfwGetCursorPos(window, &cursor_x, &cursor_y);
   // *********************************
   return true;
 }
@@ -81,10 +82,10 @@ bool update(float delta_time) {
   double current_y;
   // *********************************
   // Get the current cursor position
-
+  glfwGetCursorPos(window, &current_x, &current_y);
   // Calculate delta of cursor positions from last frame
-
-
+  //double delta_x = current_x;
+  //double delta_y = current_y;
   // Multiply deltas by ratios - gets actual change in orientation
 
 
