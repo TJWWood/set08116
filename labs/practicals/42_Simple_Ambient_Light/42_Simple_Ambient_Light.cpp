@@ -88,9 +88,9 @@ bool render() {
 
     // *********************************
     // Set material colour - all objects red
-
+	
     // Set ambient intensity - (0.3, 0.3, 0.3, 1.0)
-
+	
     // *********************************
     // Render mesh
     renderer::render(m);

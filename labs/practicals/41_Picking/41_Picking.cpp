@@ -70,27 +70,27 @@ bool update(float delta_time) {
   // Update the camera
   cam.update(delta_time);
   // If mouse button pressed get ray and check for intersection
-  if (glfwGetKey(renderer::get_window(), GLFW_MOUSE_BUTTON_1));
-    // Get the mouse position
-  double xpos;
-  double ypos;
-  glfwGetCursorPos(renderer::get_window(), &xpos, &ypos);
-    // Origin and direction of the ray
+  if (glfwGetKey(renderer::get_window(), GLFW_MOUSE_BUTTON_1)) {
+	  // Get the mouse position
+	  double xpos;
+	  double ypos;
+	  glfwGetCursorPos(renderer::get_window(), &xpos, &ypos);
+	  // Origin and direction of the ray
+	  glm::vec3 origin;
+	  glm::vec3 direction;
 
+	  // Convert mouse position to ray
+	  screen_pos_to_world_ray(xpos, ypos, renderer::get_screen_width(), renderer::get_screen_height(), cam.get_view(), cam.get_projection(), origin, direction);
 
-    // Convert mouse position to ray
-
-
-    // *********************************
-    // Check all the mehes for intersection
-    for (auto &m : meshes) {
-      float distance = 0.0f;
-      if (test_ray_oobb(origin, direction, m.second.get_minimal(), m.second.get_maximal(),
-                        m.second.get_transform().get_transform_matrix(), distance))
-        cout << m.first << " " << distance << endl;
-    }
+	  // *********************************
+	  // Check all the mehes for intersection
+	  for (auto &m : meshes) {
+		  float distance = 0.0f;
+		  if (test_ray_oobb(origin, direction, m.second.get_minimal(), m.second.get_maximal(),
+			  m.second.get_transform().get_transform_matrix(), distance))
+			  cout << m.first << " " << distance << endl;
+	  }
   }
-
   return true;
 }
 

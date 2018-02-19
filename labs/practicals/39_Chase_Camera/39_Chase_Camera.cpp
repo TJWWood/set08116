@@ -104,11 +104,11 @@ bool update(float delta_time) {
   // Use keyboard to rotate target_mesh - QE rotate on y-axis
   if (glfwGetKey(renderer::get_window(), GLFW_KEY_Q))
   {
-	  target_mesh.get_transform().rotate(vec3(0.0f, -0.2f, 0.0f));
+	  target_mesh.get_transform().rotate(vec3(0.0f, pi<float>() * delta_time, 0.0f));
   }
   if (glfwGetKey(renderer::get_window(), GLFW_KEY_E))
   {
-	  target_mesh.get_transform().rotate(vec3(0.0f, 0.2f, 0.0f));
+	  target_mesh.get_transform().rotate(vec3(0.0f, -pi<float>() * delta_time, 0.0f));
   }
   // Use keyboard to move the target_mesh - WSAD
   if (glfwGetKey(renderer::get_window(), GLFW_KEY_W)) {
@@ -124,7 +124,7 @@ bool update(float delta_time) {
 	  target_mesh.get_transform().translate(vec3(0.2f, 0.0f, 0.0f));
   }
   // Move camera - update target position and rotation
-
+  cam.move(target_mesh.get_transform().position, eulerAngles(target_mesh.get_transform().orientation));
   // Update the camera
   cam.update(delta_time);
   // Update cursor pos
