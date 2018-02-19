@@ -81,7 +81,7 @@ bool render() {
   for (size_t i = 0; i < meshes.size(); i++) {
     // *********************************
     // SET M to be the usual mesh  transform matrix
-	  mat4 M = PV;
+	  auto M = 
     // *********************************
 
     // Apply the heirarchy chain
