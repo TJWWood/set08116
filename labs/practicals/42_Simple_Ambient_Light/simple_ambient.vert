@@ -18,7 +18,7 @@ void main() {
   // Calculate position
   gl_Position = MVP * vec4(position, 1.0);
   // Calculate ambient component
-
+  //ambient_intensity = texture(vertex_colour, position);
   // Output vertex colour
   vertex_colour = material_colour;
   // *********************************

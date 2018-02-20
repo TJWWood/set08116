@@ -73,30 +73,29 @@ bool update(float delta_time) {
 }
 
 bool render() {
-  // Render meshes
-  for (auto &e : meshes) {
-    auto m = e.second;
-    // Bind effect
-    renderer::bind(eff);
-    // Create MVP matrix
-    auto M = m.get_transform().get_transform_matrix();
-    auto V = cam.get_view();
-    auto P = cam.get_projection();
-    auto MVP = P * V * M;
-    // Set MVP matrix uniform
-    glUniformMatrix4fv(eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MVP));
+	// Render meshes
+	for (auto &e : meshes) {
+		auto m = e.second;
+		// Bind effect
+		renderer::bind(eff);
+		// Create MVP matrix
+		auto M = m.get_transform().get_transform_matrix();
+		auto V = cam.get_view();
+		auto P = cam.get_projection();
+		auto MVP = P * V * M;
+		// Set MVP matrix uniform
+		glUniformMatrix4fv(eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MVP));
 
-    // *********************************
-    // Set material colour - all objects red
-	//glUniform4fv(eff.get_uniform_location("material_colour"), 1, value_ptr(vec4(1.0f,0.0f,0.0f, 1.0f)));
-    // Set ambient intensity - (0.3, 0.3, 0.3, 1.0)
-	//vec4 ambient_intensity(vec4(0.3f, 0.3f, 0.3f, 1.0f));
-    // *********************************
-    // Render mesh
-    renderer::render(m);
-  }
-
-  return true;
+		// *********************************
+		// Set material colour - all objects red
+		glUniform4fv(eff.get_uniform_location("material_colour"), 1, value_ptr(vec4(1.0f, 0.0f, 0.0f, 1.0f)));
+		// Set ambient intensity - (0.3, 0.3, 0.3, 1.0)
+		glUniform4fv(eff.get_uniform_location("ambient_intensity"), 1, value_ptr(vec4(0.3f, 0.3f, 0.3f, 1.0f)));
+		// *********************************
+		// Render mesh
+		renderer::render(m);
+	}
+	return true;
 }
 
 void main() {
