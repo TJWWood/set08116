@@ -90,7 +90,7 @@ bool render() {
     glUniformMatrix4fv(eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MVP));
     // *********************************
     // Set M matrix uniform
-	glUniformMatrix3fv(eff.get_uniform_location("M"), 1, GL_FALSE, value_ptr(M));
+	glUniformMatrix4fv(eff.get_uniform_location("M"), 1, GL_FALSE, value_ptr(M));
     // Set N matrix uniform - remember - 3x3 matrix
 	glUniformMatrix3fv(eff.get_uniform_location("N"), 1, GL_FALSE, value_ptr(m.get_transform().get_normal_matrix()));
     // Set material colour - specular material is white
