@@ -5,7 +5,7 @@ using namespace std;
 using namespace graphics_framework;
 using namespace glm;
 
-map<string, mesh> meshes;
+ map<string, mesh> meshes;
 effect eff;
 texture tex;
 target_camera cam;
@@ -16,7 +16,7 @@ bool load_content() {
    meshes["plane"] = mesh(geometry_builder::create_plane());
 
   // Create scene
-  meshes["box"] = mesh(geometry_builder::create_box());
+   meshes["box"] = mesh(geometry_builder::create_box());
   meshes["tetra"] = mesh(geometry_builder::create_tetrahedron());
   meshes["pyramid"] = mesh(geometry_builder::create_pyramid());
   meshes["disk"] = mesh(geometry_builder::create_disk(20));
@@ -86,7 +86,7 @@ bool load_content() {
   meshes["torus"].get_material().set_emissive(vec4(0.0f, 0.0f, 0.0f, 1.0f));
   meshes["torus"].get_material().set_specular(vec4(1.0f, 1.0f, 1.0f, 1.0f));
   meshes["torus"].get_material().set_shininess(25.0f);
-    meshes["torus"].get_material().set_diffuse(vec4(1.0f, 1.0f, 1.0f, 1.0f));
+  meshes["torus"].get_material().set_diffuse(vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
   // *********************************
 
@@ -100,7 +100,7 @@ bool load_content() {
   // Light colour white
   light.set_light_colour(vec4(1.0f, 1.0f, 1.0f, 1.0f));
   // Light direction to forward and down (normalized)
-  light.set_direction(vec3(1.0f, -0.5, 0.0f)); 
+  light.set_direction(normalize(vec3(-1.0f, -1.0f, 0.0f))); 
   // Set range to 20
   light.set_range(20.0f);
   // Set power to 1
@@ -213,7 +213,7 @@ bool render() {
 	renderer::bind(m.get_material(), "mat");
 
     // Bind light
-	renderer::bind(light, "point");
+	renderer::bind(light, "spot");
 
     // Bind texture
 	renderer::bind(tex, 0);

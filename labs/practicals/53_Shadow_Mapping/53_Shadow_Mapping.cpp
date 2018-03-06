@@ -23,7 +23,7 @@ bool load_content() {
   // Need to rotate the teapot on x by negative pi/2
 	meshes["teapot"].get_transform().rotate(vec3(half_pi<float>() / 2.0, 0.0f, 0.0f));
   // Scale the teapot - (0.1, 0.1, 0.1)
-	//meshes["teapot"].get_transform().scale(vec3(0.1f, 0.1f, 0.1f));
+
   // ***********************
   // Set materials
   // - all emissive is black
@@ -78,7 +78,7 @@ bool update(float delta_time) {
 
   // Press s to save
   if (glfwGetKey(renderer::get_window(), 'S') == GLFW_PRESS) {
-    shadow.buffer->save("test.png");
+     shadow.buffer->save("C:\Users\Thomas\Desktop\set08116\test.png");
   }
 
   cam.update(delta_time);

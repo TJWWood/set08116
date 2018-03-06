@@ -39,10 +39,10 @@ void main() {
   // Transform normal
   transformed_normal = N * normal;
 
-  // *********************************
-  // Transform tangent
-
-  // Transform binormal
-
+    // *********************************
+    // Transform tangent
+    tangent_out = N * tangent;
+    // Transform binormal
+    binormal_out = N * binormal;
   // *********************************
 }

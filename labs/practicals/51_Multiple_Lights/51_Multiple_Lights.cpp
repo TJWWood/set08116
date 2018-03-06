@@ -5,7 +5,7 @@ using namespace std;
 using namespace graphics_framework;
 using namespace glm;
 
-map<string, mesh> meshes;
+  map<string, mesh> meshes;
 effect eff;
 texture tex;
 target_camera cam;
@@ -14,7 +14,7 @@ vector<spot_light> spots(5);
 
 bool load_content() {
   // Create plane mesh
-    meshes["plane"] = mesh(geometry_builder::create_plane());
+   meshes["plane"] = mesh(geometry_builder::create_plane());
 
   // Create scene
   meshes["box"] = mesh(geometry_builder::create_box());
@@ -92,15 +92,15 @@ bool load_content() {
 
   // Load texture
   tex = texture("textures/checker.png");
-
+   
   // Set lighting values
   // *********************************
   // Point 0, Position (-25, 5, -15)
   // Red, 20 range
-  points[0].set_position(vec3(-25.0f, 5.0f, -15.0f));
-  points[0].set_light_colour(vec4(1.0f, 0.0f, 0.0f, 1.0f));
-  points[0].set_range(20.0f);
-  // Point 1, Position (-25, 5, -35)
+   points[0].set_position(vec3(-25.0f, 5.0f, -15.0f));
+   points[0].set_light_colour(vec4(1.0f, 0.0f, 0.0f, 1.0f));
+   points[0].set_range(20.0f);
+    // Point 1, Position (-25, 5, -35)
   // Red,20 range
   points[1].set_position(vec3(-25.0f, 5.0f, -35.0f));
   points[1].set_light_colour(vec4(1.0f, 0.0f, 0.0f, 1.0f));
@@ -119,8 +119,8 @@ bool load_content() {
   // Green, Direction (1, -1, -1) normalized
   // 20 range,0.5 power
   spots[0].set_position(vec3(-25.0f, 10.0f, -15.0f));
-  spots[0].set_light_colour(vec4(0.0f, 1.0f, 0.0f, 1.0f));
-  spots[0].set_direction(vec3(1.0f, -1.0f, -1.0f));
+   spots[0].set_light_colour(vec4(0.0f, 1.0f, 0.0f, 1.0f));
+  spots[0].set_direction(normalize(vec3(1.0f, -1.0f, -1.0f)));
   spots[0].set_range(20.0f);
   spots[0].set_power(0.5f);
   // Spot 1,Position (-25, 10, -35)
@@ -128,7 +128,7 @@ bool load_content() {
   // 20 range,0.5 power
   spots[1].set_position(vec3(-25.0f, 10.0f, -35.0f));
   spots[1].set_light_colour(vec4(0.0f, 1.0f, 0.0f, 1.0f));
-  spots[1].set_direction(vec3(1.0f, -1.0f, 1.0f));
+  spots[1].set_direction(normalize(vec3(1.0f, -1.0f, 1.0f)));
   spots[1].set_range(20.0f);
   spots[1].set_power(0.5f);
   // Spot 2,Position (-10, 10, -15)
@@ -136,7 +136,7 @@ bool load_content() {
   // 20 range,0.5 power
   spots[2].set_position(vec3(-10.0f, 10.0f, -15.0f));
   spots[2].set_light_colour(vec4(0.0f, 1.0f, 0.0f, 1.0f));
-  spots[2].set_direction(vec3(-1.0f, -1.0f, -1.0f));
+  spots[2].set_direction(normalize(vec3(-1.0f, -1.0f, -1.0f)));
   spots[2].set_range(20.0f);
   spots[2].set_power(0.5f);
   // Spot 3,Position (-10, 10, -35)
@@ -144,17 +144,17 @@ bool load_content() {
   // 20 range,0.5 power
   spots[3].set_position(vec3(-10.0f, 10.0f, -35.0f));
   spots[3].set_light_colour(vec4(0.0f, 1.0f, 0.0f, 1.0f));
-  spots[3].set_direction(vec3(-1.0f, -1.0f, 1.0f));
+  spots[3].set_direction(normalize(vec3(-1.0f, -1.0f, 1.0f)));
   spots[3].set_range(20.0f);
   spots[3].set_power(0.5f);
   // Spot 4,Position (-17.5, 15, -25)
   // Blue,Direction (0, -1, 0)
   // 30 range,1.0 power
-  spots[0].set_position(vec3(-17.5f, 15.0f, -25.0f));
-  spots[0].set_light_colour(vec4(0.0f, 0.0f, 1.0f, 1.0f));
-  spots[0].set_direction(vec3(0.0f, -1.0f, 0.0f));
-  spots[0].set_range(30.0f);
-  spots[0].set_power(1.0f);
+  spots[4].set_position(vec3(-17.5f, 15.0f, -25.0f));
+  spots[4].set_light_colour(vec4(0.0f, 0.0f, 1.0f, 1.0f));
+  spots[4].set_direction(vec3(0.0f, -1.0f, 0.0f));
+  spots[4].set_range(30.0f);
+  spots[4].set_power(1.0f);
   // Load in shaders
   eff.add_shader("51_Multiple_Lights/multi-light.vert", GL_VERTEX_SHADER);
   eff.add_shader("51_Multiple_Lights/multi-light.frag", GL_FRAGMENT_SHADER);

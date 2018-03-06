@@ -150,11 +150,11 @@ bool load_content() {
   // Spot 4,Position (-17.5, 15, -25)
   // Blue,Direction (0, -1, 0)
   // 30 range,1.0 power
-  spots[0].set_position(vec3(-17.5f, 15.0f, -25.0f));
-  spots[0].set_light_colour(vec4(0.0f, 0.0f, 1.0f, 1.0f));
-  spots[0].set_direction(vec3(0.0f, -1.0f, 0.0f));
-  spots[0].set_range(30.0f);
-  spots[0].set_power(1.0f);
+  spots[4].set_position(vec3(-17.5f, 15.0f, -25.0f));
+  spots[4].set_light_colour(vec4(0.0f, 0.0f, 1.0f, 1.0f));
+  spots[4].set_direction(vec3(0.0f, -1.0f, 0.0f));
+  spots[4].set_range(30.0f);
+  spots[4].set_power(1.0f);
   // *********************************
    
   // Load in shaders
