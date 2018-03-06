@@ -16,10 +16,11 @@ shadow_map shadow;
 bool load_content() {
   // *********************************
   // Create shadow map- use screen size
-
-  // Create plane mesh
-
-  // Create "teapot" mesh by loading in models/teapot.obj
+	shadow = shadow_map(renderer::get_screen_width(), renderer::get_screen_height());
+	// Create plane mesh
+	meshes["plane"] = mesh(geometry_builder::create_plane());
+	// Create "teapot" mesh by loading in models/teapot.obj
+	meshes["teapot"] = mesh(geometry("models/teapot.obj"));
 
   // Translate Teapot(0,4,0)
 
@@ -122,7 +123,7 @@ bool render() {
 
   // We could just use the Camera's projection, 
   // but that has a narrower FoV than the cone of the spot light, so we would get clipping.
-  // so we have yo create a new Proj Mat with a field of view of 90.
+  // so we have to create a new Proj Mat with a field of view of 90.
   mat4 LightProjectionMat = perspective<float>(90.f, renderer::get_screen_aspect(), 0.1f, 1000.f);
 
   // Bind shader
@@ -134,7 +135,7 @@ bool render() {
     auto M = m.get_transform().get_transform_matrix();
     // *********************************
     // View matrix taken from shadow map
-
+	auto V = shadow.get_view();
     // *********************************
     auto MVP = LightProjectionMat * V * M;
     // Set MVP matrix uniform

@@ -81,20 +81,27 @@ layout(location = 2) in vec2 tex_coord;
 layout(location = 0) out vec4 colour;
 
 void main() {
-  // *********************************
-  // Calculate view direction
+    // *********************************
+    // Calculate view direction
+    vec3 view_dir = normalize(eye_pos - position);
 
-  // Sample texture
+    // Sample texture
+    vec4 tex_colour = texture(tex, tex_coord);
 
-  // Calculate directional light colour
+    // Calculate directional light colour
 
-  // Sum point lights
+    // Sum point lights
+    for (int i = 0; i < 3; i++)
+    {
+        calculate_point(points[i], mat, points[i].position, normal, view_dir, tex_colour);
+    }
 
 
+    // Sum spot lights
+    for (int j = 0; j < 4; j++)
+    {
+        calculate_spot(spots[j], mat, spots[j].position, normal, view_dir, tex_colour);
+    }
 
-  // Sum spot lights
-
-
-
-  // *********************************
+    // *********************************
 }

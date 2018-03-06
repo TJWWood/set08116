@@ -118,47 +118,35 @@ bool update(float delta_time) {
   static float range = 20.0f;
   // *********************************
 
-
-
-
-
-
-
-
-
-
-
-
   // WSAD to move point light
-
-
-
-
-
-
-
-
-
-
-
-
+  if (glfwGetKey(renderer::get_window(), GLFW_KEY_W)) {
+	  light.move(vec3(0.0f, 0.0f, -0.2f));
+  }
+  if (glfwGetKey(renderer::get_window(), GLFW_KEY_S)) {
+	  light.move(vec3(0.0f, 0.0f, 0.2f));
+  }
+  if (glfwGetKey(renderer::get_window(), GLFW_KEY_A)) {
+	  light.move(vec3(-0.2f, 0.0f, 0.0f));
+  }
+  if (glfwGetKey(renderer::get_window(), GLFW_KEY_D)) {
+	  light.move(vec3(0.2f, 0.0f, 0.0f));
+  }
   // O and P to change range
-
-
-
-
-
-
+  if (glfwGetKey(renderer::get_window(), GLFW_KEY_O)) {
+	    range = range + 1.0f;
+  }  
+  if (glfwGetKey(renderer::get_window(), GLFW_KEY_P)) {
+	  range = range - 1.0f;
+  }
   // *********************************
-
-  // Set range
+   // Set range
   light.set_range(range);
-
+   
   // Rotate the sphere
   meshes["sphere"].get_transform().rotate(vec3(0.0f, half_pi<float>(), 0.0f) * delta_time);
 
-  cam.update(delta_time);
-
+   cam.update(delta_time);
+  
   return true;
 }
 
@@ -174,7 +162,7 @@ bool render() {
     auto P = cam.get_projection();
     auto MVP = P * V * M;
     // Set MVP matrix uniform
-    glUniformMatrix4fv(eff.get_uniform_location("MVP"), // Location of uniform
+     glUniformMatrix4fv(eff.get_uniform_location("MVP"), // Location of uniform
                        1,                               // Number of values - 1 mat4
                        GL_FALSE,                        // Transpose the matrix?
                        value_ptr(MVP));                 // Pointer to matrix data
@@ -187,7 +175,7 @@ bool render() {
     // Bind material
 	renderer::bind(m.get_material(), "mat");
 	// Bind light
-    renderer::bind(light, "point");
+     renderer::bind(light, "point");
 	// Bind texture
 	renderer::bind(tex, 0);
 	// Set tex uniform
