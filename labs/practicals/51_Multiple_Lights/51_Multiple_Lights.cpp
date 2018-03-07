@@ -5,7 +5,7 @@ using namespace std;
 using namespace graphics_framework;
 using namespace glm;
 
-  map<string, mesh> meshes;
+map<string, mesh> meshes;
 effect eff;
 texture tex;
 target_camera cam;
