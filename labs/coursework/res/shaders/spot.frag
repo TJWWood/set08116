@@ -52,7 +52,7 @@ vec4 calculate_spot(in spot_light spot, in material mat, in vec3 position, in ve
     vec4 specular = k * (mat.specular_reflection * light_colour);
     vec4 primary = mat.emissive + diffuse;
     vec4 colour = primary * tex_colour + specular;
-    colour.a = 1;
+    colour.a = 1.0;
     // *********************************
     return colour;
 }

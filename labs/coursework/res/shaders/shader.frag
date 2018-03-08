@@ -58,11 +58,13 @@ vec4 calculate_direction(in directional_light light, in material mat, in vec3 no
                          in vec4 tex_colour);
 vec4 calculate_spot(in spot_light spot, in material mat, in vec3 position, in vec3 normal, in vec3 view_dir,
                     in vec4 tex_colour);
-//float calculate_shadow(in sampler2D shadow_map, in vec4 light_space_pos);
+float calculate_shadow(in sampler2D shadow_map, in vec4 light_space_pos);
+
+vec3 calc_normal(in vec3 normal, in vec3 tangent, in vec3 binormal, in sampler2D normal_map, in vec2 tex_coord);
 
 uniform point_light points[4];
 // Spot lights being used in the scene
-uniform spot_light spots[5];
+uniform spot_light spots[2];
     //uniform spot_light shadow_spot;
 // Material of the object being rendered
 uniform material mat;
@@ -71,7 +73,7 @@ uniform vec3 eye_pos;
 // Texture to sample from
 uniform sampler2D tex;
 // Shadow map to sample from
-//uniform sampler2D shadow_map;
+uniform sampler2D shadow_map;
 
 // Incoming position
 layout(location = 0) in vec3 position;
@@ -90,7 +92,7 @@ void main() {
     colour = vec4(0.0, 0.0, 0.0, 1.0);
 
     // Calculate shade factor
-    //float shade = calculate_shadow(shadow_map, light_space_pos);
+    float shade = calculate_shadow(shadow_map, light_space_pos);
     // Calculate view direction, normalize it
     vec3 view_dir = normalize(eye_pos - position);
     // Sample texture
@@ -108,6 +110,7 @@ void main() {
         colour += calculate_spot(spots[j], mat, position, normal, view_dir, tex_colour);
     }
     // Scale colour by shade
+    colour *= shade;
     //Ensure alpha is 1.0
     colour.a = 1;
     // *********************************
