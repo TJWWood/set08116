@@ -12,11 +12,10 @@ uniform mat4 lightMVP;
 // Incoming position
 layout (location = 0) in vec3 position;
 // Incoming normal
+layout(location = 2) in vec3 normal;
 layout(location = 7) in vec3 binormal;
 // Incoming tangent
 layout(location = 8) in vec3 tangent;
-
-layout(location = 2) in vec3 normal;
 // Incoming texture coordinate
 layout (location = 10) in vec2 tex_coord_in;
 
@@ -29,10 +28,9 @@ layout (location = 1) out vec3 transformed_normal;
 layout (location = 2) out vec2 tex_coord_out;
 // Outgoing position in light space
 layout (location = 3) out vec4 vertex_light;
-
-layout(location = 7) out vec3 tangent_out;
-// Outgoing binormal
-layout(location = 8) out vec3 binormal_out;
+layout(location = 7) out vec3 binormal_out;
+// Outgoing tangent
+layout(location = 8) out vec3 tangent_out;
 
 void main()
 {
@@ -47,9 +45,9 @@ void main()
     // *********************************
     // Transform position into light space
     vertex_light = lightMVP * vec4(position, 1.0);
-    // *********************************
 
     tangent_out = N * tangent;
     // Transform binormal
     binormal_out = N * binormal;
+    // *********************************
 }

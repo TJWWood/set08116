@@ -6,9 +6,14 @@ using namespace graphics_framework;
 using namespace glm;
 
 map<string, mesh> meshes;
+map<string, mesh> normal_meshes;
+std::array<mesh, 3> h_meshes;
+std::array<texture, 3> textures;
 effect eff;
 effect shadow_eff;
+effect normal_map_eff;
 texture tex;
+texture normal_map;
 target_camera cam;
 free_camera free_cam;
 arc_ball_camera arc_cam;
@@ -41,21 +46,22 @@ bool load_content() {
 	meshes["tetra"] = mesh(geometry_builder::create_tetrahedron());
 	meshes["pyramid"] = mesh(geometry_builder::create_pyramid());
 	meshes["disk"] = mesh(geometry_builder::create_disk(20));
-	meshes["cylinder"] = mesh(geometry_builder::create_cylinder(20, 20));
+	normal_meshes["cylinder"] = mesh(geometry_builder::create_cylinder(20, 20));
+	meshes["torus"] = mesh(geometry_builder::create_torus(20, 20, 1.0f, 7.0f));
 
-	meshes["main"] = mesh(geometry_builder::create_pyramid());
-	meshes["ring"] = mesh(geometry_builder::create_torus(20, 10, 1.0f,7.0f));
-	meshes["planet1"] = mesh(geometry_builder::create_sphere(20, 20));
-	meshes["planet2"] = mesh(geometry_builder::create_sphere(20, 20));
+	//main
+	h_meshes[0] = mesh(geometry_builder::create_sphere(20,20));
+	//sphere1
+	h_meshes[1] = mesh(geometry_builder::create_sphere(20, 20));
+	//sphere2
+	h_meshes[2] = mesh(geometry_builder::create_sphere(20, 20));
 
-	meshes["main"].get_transform().translate(vec3(0.0f, 10.0f, 0.0f));
-	meshes["main"].get_transform().scale = vec3(5.0f, 5.0f, 5.0f);
-	meshes["ring"].get_transform().translate(vec3(0.0f, 10.0f, 0.0f));
-
-	meshes["planet1"].get_transform().scale = vec3(2.5f, 2.5f, 2.5f);
-	meshes["planet1"].get_transform().translate(vec3(0.0f, 10.0f, -14.0f));
-	meshes["planet2"].get_transform().scale = vec3(2.0f, 2.0f, 2.0f);
-	meshes["planet2"].get_transform().translate(vec3(0.0f, 10.0f, 14.0f));
+	h_meshes[0].get_transform().position = vec3(0.0f, 10.0f, 0.0f);
+	h_meshes[0].get_transform().scale = vec3(5.0f, 5.0f, 5.0f);
+	h_meshes[1].get_transform().scale = vec3(0.5f, 0.5f, 0.5f);
+	h_meshes[1].get_transform().position = vec3(0.0f, 0.0f, 4.0f);
+	h_meshes[2].get_transform().scale = vec3(1.5f, 1.5f, 1.5f);
+	h_meshes[2].get_transform().position = vec3(0.0f, 0.0f, -14.0f);
 
 	// Transform objects
 	meshes["box"].get_transform().scale = vec3(5.0f, 5.0f, 5.0f);
@@ -67,8 +73,9 @@ bool load_content() {
 	meshes["disk"].get_transform().scale = vec3(3.0f, 1.0f, 3.0f);
 	meshes["disk"].get_transform().translate(vec3(-10.0f, 11.5f, -30.0f));
 	meshes["disk"].get_transform().rotate(vec3(half_pi<float>(), 0.0f, 0.0f));
-	meshes["cylinder"].get_transform().scale = vec3(5.0f, 10.0f, 5.0f);
-	meshes["cylinder"].get_transform().translate(vec3(0.0f, 2.5f, 0.0f));
+	normal_meshes["cylinder"].get_transform().scale = vec3(5.0f, 10.0f, 5.0f);
+	normal_meshes["cylinder"].get_transform().translate(vec3(0.0f, 2.5f, -25.0f));
+	meshes["torus"].get_transform().translate(vec3(0.0f, 10.0f, 0.0f));
 
 
 	meshes["box"].get_material().set_emissive(vec4(0.0f, 0.0f, 0.0f, 1.0f));
@@ -95,23 +102,32 @@ bool load_content() {
 	meshes["disk"].get_material().set_diffuse(vec4(1.0f, 1.0f, 0.0f, 1.0f));
 	// Magenta cylinder
 
-	meshes["cylinder"].get_material().set_emissive(vec4(0.0f, 0.0f, 0.0f, 1.0f));
-	meshes["cylinder"].get_material().set_specular(vec4(1.0f, 1.0f, 1.0f, 1.0f));
-	meshes["cylinder"].get_material().set_shininess(25.0f);
-	meshes["cylinder"].get_material().set_diffuse(vec4(1.0f, 0.0f, 1.0f, 1.0f));
+	normal_meshes["cylinder"].get_material().set_emissive(vec4(0.0f, 0.0f, 0.0f, 1.0f));
+	normal_meshes["cylinder"].get_material().set_specular(vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	normal_meshes["cylinder"].get_material().set_shininess(25.0f);
+	normal_meshes["cylinder"].get_material().set_diffuse(vec4(1.0f, 0.0f, 1.0f, 1.0f));
+
+	meshes["torus"].get_material().set_emissive(vec4(0.0f, 0.0f, 0.0f, 1.0f));
+	meshes["torus"].get_material().set_specular(vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	meshes["torus"].get_material().set_shininess(25.0f);
+	meshes["torus"].get_material().set_diffuse(vec4(1.0f, 0.0f, 1.0f, 1.0f));
 	// Cyan sphere
 
-	meshes["main"].get_material().set_emissive(vec4(0.0f, 0.0f, 0.0f, 1.0f));
-	meshes["main"].get_material().set_specular(vec4(1.0f, 1.0f, 1.0f, 1.0f));
-	meshes["main"].get_material().set_shininess(25.0f);
-	meshes["main"].get_material().set_diffuse(vec4(0.0f, 1.0f, 1.0f, 1.0f));
+	h_meshes[0].get_material().set_emissive(vec4(0.0f, 0.0f, 0.0f, 1.0f));
+	h_meshes[0].get_material().set_specular(vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	h_meshes[0].get_material().set_shininess(25.0f);
+	h_meshes[0].get_material().set_diffuse(vec4(0.0f, 0.0f, 1.0f, 1.0f));
 	// White torus
 
-	meshes["ring"].get_material().set_emissive(vec4(0.0f, 0.0f, 0.0f, 1.0f));
-	meshes["ring"].get_material().set_specular(vec4(1.0f, 1.0f, 1.0f, 1.0f));
-	meshes["ring"].get_material().set_shininess(25.0f);
-	meshes["ring"].get_material().set_diffuse(vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	h_meshes[1].get_material().set_emissive(vec4(0.0f, 0.0f, 0.0f, 1.0f));
+	h_meshes[1].get_material().set_specular(vec4(0.0f, 1.0f, 0.0f, 1.0f));
+	h_meshes[1].get_material().set_shininess(25.0f);
+	h_meshes[1].get_material().set_diffuse(vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
+	h_meshes[2].get_material().set_emissive(vec4(0.0f, 0.0f, 0.0f, 1.0f));
+	h_meshes[2].get_material().set_specular(vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	h_meshes[2].get_material().set_shininess(25.0f);
+	h_meshes[2].get_material().set_diffuse(vec4(1.0f, 0.0f, 0.0f, 1.0f));
 
 	meshes["teapot"] = mesh(geometry("res/models/teapot.obj"));
 	// Translate Teapot(0,4,0)
@@ -124,6 +140,10 @@ bool load_content() {
 	meshes["teapot"].get_material().set_shininess(25.0f);
    
 	tex = texture("res/textures/brick.jpg");
+	textures[0] = texture("res/textures/brick.jpg");
+	textures[1] = texture("res/textures/grass.jpg");
+	textures[2] = texture("res/textures/check_2.png");
+	normal_map = texture("res/textures/brick_normalmap.jpg");
 
 	points[0].set_position(vec3(0.0f, 17.0f, 0.0f));
 	points[0].set_light_colour(vec4(1.0f, 0.0f, 0.0f, 1.0f));
@@ -145,26 +165,29 @@ bool load_content() {
 	spots[0].set_light_colour(vec4(1.0f, 1.0f, 1.0f, 1.0f));
 	spots[0].set_direction(vec3(0.0f, -1.0f, 0.0f));
 	spots[0].set_range(50.0f);
-	spots[0].set_power(1.0f);
+	spots[0].set_power(0.2f);
 
 	spots[1].set_position(vec3(40.0f, 20.0f, -10.0f));
 	spots[1].set_light_colour(vec4(1.0f, 1.0f, 1.0f, 1.0f));
-	spots[1].set_direction(vec3(0.0f, -1.0f, -1.0f));
-	spots[1].set_range(30.0f);
-	spots[1].set_power(10.0f);
+	spots[1].set_direction(normalize(vec3(0.0f, -1.0f, -1.0f)));
+	spots[1].set_range(50.0f);
+	spots[1].set_power(0.5f);
 
   // Load in shaders
     eff.add_shader("res/shaders/shader.vert", GL_VERTEX_SHADER);
-  vector<string> frag_shaders{ "res/shaders/shader.frag", "res/shaders/direction.frag",
-	    "res/shaders/point.frag", "res/shaders/spot.frag", "res/shaders/shadow.frag" };
+	vector<string> frag_shaders{ "res/shaders/shader.frag", "res/shaders/point.frag",
+		  "res/shaders/spot.frag", "res/shaders/shadow.frag", "res/shaders/normal_map.frag" };
   eff.add_shader(frag_shaders, GL_FRAGMENT_SHADER);
 
   shadow_eff.add_shader("res/shaders/shader.vert", GL_VERTEX_SHADER);
   shadow_eff.add_shader(frag_shaders, GL_FRAGMENT_SHADER);
 
+  normal_map_eff.add_shader("res/shaders/shader.vert", GL_VERTEX_SHADER);
+  normal_map_eff.add_shader(frag_shaders, GL_FRAGMENT_SHADER);
   // Build effect
   eff.build();
   shadow_eff.build();
+  normal_map_eff.build();
 
   // Set camera properties
 
@@ -177,7 +200,7 @@ bool load_content() {
   free_cam.set_projection(quarter_pi<float>(), renderer::get_screen_aspect(), 0.1f, 1000.0f);
 
   arc_cam.set_distance(100.0f);
-  arc_cam.set_target(meshes["main"].get_transform().position);
+  arc_cam.set_target(h_meshes[0].get_transform().position);
   arc_cam.set_projection(quarter_pi<float>(), renderer::get_screen_aspect(), 0.1f, 1000.0f);
 
   chase_cam.set_pos_offset(vec3(10.0f, 25.0f, 10.0f));
@@ -243,6 +266,11 @@ bool update(float delta_time) {
 		meshes["box"].get_transform().translate(vec3(0.2f, 0.0f, 0.0f));
 	}
 	chase_cam.move(meshes["box"].get_transform().position, eulerAngles(meshes["box"].get_transform().orientation));
+
+	h_meshes[0].get_transform().rotate(vec3(0.0f, delta_time, 0.0f));
+	h_meshes[1].get_transform().rotate(vec3(0.0f, 0.0f, delta_time));
+
+	meshes["torus"].get_transform().rotate(vec3(delta_time, 0.0f, 0.0f));
 
 	// Update the cameras
 	free_cam.update(delta_time);
@@ -342,7 +370,7 @@ bool render() {
 		glUniformMatrix3fv(eff.get_uniform_location("N"), 1, GL_FALSE, value_ptr(m.get_transform().get_normal_matrix()));
 		auto viewM = shadow.get_view();
 		auto lightMVP = LightProjectionMat * viewM * M;
-	    	glUniformMatrix4fv(eff.get_uniform_location("lightMVP"), 1, GL_FALSE, value_ptr(lightMVP));
+		glUniformMatrix4fv(eff.get_uniform_location("lightMVP"), 1, GL_FALSE, value_ptr(lightMVP));
 
 		renderer::bind(m.get_material(), "mat");
 		renderer::bind(points, "points");
@@ -350,14 +378,125 @@ bool render() {
 		renderer::bind(tex, 0);
 		glUniform1i(eff.get_uniform_location("tex"), 0);
 		glUniform3fv(eff.get_uniform_location("eye_pos"), 1, value_ptr(cam.get_position()));
-		
+
 		renderer::bind(shadow.buffer->get_depth(), 1);
 		glUniform1i(eff.get_uniform_location("shadow_map"), 1);
 
 		// Render geometry
 		renderer::render(m);
 	}
-  return true;
+
+	for (size_t i = 0; i < h_meshes.size(); i++) {
+		// *********************************
+		// SET M to be the usual mesh  transform matrix
+		mat4 M = h_meshes[i].get_transform().get_transform_matrix();
+			// *********************************
+
+			// Apply the heirarchy chain
+		for (size_t j = i; j > 0; j--) {
+			M = h_meshes[j - 1].get_transform().get_transform_matrix() * M;
+		}
+
+		auto V = cam.get_view();
+		auto P = cam.get_projection();
+
+		if (glfwGetKey(renderer::get_window(), GLFW_KEY_1) == GLFW_PRESS) {
+			cam.set_position(spots[1].get_position());
+		}
+
+		if (glfwGetKey(renderer::get_window(), GLFW_KEY_2) == GLFW_PRESS) {
+			V = free_cam.get_view();
+			P = free_cam.get_projection();
+		}
+
+		if (glfwGetKey(renderer::get_window(), GLFW_KEY_3) == GLFW_PRESS) {
+			V = arc_cam.get_view();
+			P = arc_cam.get_projection();
+		}
+
+		if (glfwGetKey(renderer::get_window(), GLFW_KEY_4) == GLFW_PRESS) {
+			V = chase_cam.get_view();
+			P = chase_cam.get_projection();
+		}
+
+		auto MVP = P * V * M;
+		// Set MVP matrix uniform
+		glUniformMatrix4fv(eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MVP));
+	 	 glUniformMatrix4fv(eff.get_uniform_location("M"), 1, GL_FALSE, value_ptr(M));
+		glUniformMatrix3fv(eff.get_uniform_location("N"), 1, GL_FALSE, value_ptr(h_meshes[i].get_transform().get_normal_matrix()));
+
+
+
+		renderer::bind(textures[i], 0);
+
+		renderer::bind(normal_map, 1);
+		glUniform1i(eff.get_uniform_location("normal_map"), 1);
+		glUniform3fv(eff.get_uniform_location("eye_pos"), 1, value_ptr(cam.get_position()));
+
+		// Render geometry
+		renderer::render(h_meshes[i]);
+	}
+
+	for (auto &e : normal_meshes)
+	{
+		auto m = e.second;
+
+		auto M = m.get_transform().get_transform_matrix();
+		auto V = cam.get_view();
+		auto P = cam.get_projection();
+
+		if (glfwGetKey(renderer::get_window(), GLFW_KEY_1) == GLFW_PRESS) {
+			cam.set_position(spots[1].get_position());
+		}
+
+		if (glfwGetKey(renderer::get_window(), GLFW_KEY_2) == GLFW_PRESS) {
+			V = free_cam.get_view();
+			P = free_cam.get_projection();
+		}
+
+		if (glfwGetKey(renderer::get_window(), GLFW_KEY_3) == GLFW_PRESS) {
+			V = arc_cam.get_view();
+			P = arc_cam.get_projection();
+		}
+
+		if (glfwGetKey(renderer::get_window(), GLFW_KEY_4) == GLFW_PRESS) {
+			V = chase_cam.get_view();
+			P = chase_cam.get_projection();
+		}
+		auto MVP = P * V * M;
+		// Set MVP matrix uniform
+		glUniformMatrix4fv(eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MVP));
+		// Set M matrix uniform
+		glUniformMatrix4fv(eff.get_uniform_location("M"), 1, GL_FALSE, value_ptr(M));
+		// Set N matrix uniform
+		glUniformMatrix3fv(eff.get_uniform_location("N"), 1, GL_FALSE,
+			value_ptr(m.get_transform().get_normal_matrix()));
+		// *********************************
+		// Bind material
+		renderer::bind(m.get_material(), "mat");
+
+		// Bind light
+		renderer::bind(spots, "light");
+		renderer::bind(points, "points");
+
+		// Bind texture
+		renderer::bind(tex, 0);
+
+		// Set tex uniform
+		glUniform1i(eff.get_uniform_location("tex"), 0);
+
+		// Bind normal_map
+		renderer::bind(normal_map, 1);
+		// Set normal_map uniform
+		glUniform1i(eff.get_uniform_location("normal_map"), 1);
+		// Set eye position
+		glUniform3fv(eff.get_uniform_location("eye_pos"), 1, value_ptr(cam.get_position()));
+
+		// Render mesh
+		renderer::render(m);
+	}
+
+	return true;
 }
 
 void main() {
