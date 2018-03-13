@@ -57,7 +57,13 @@ vec4 calculate_point(in point_light point, in material mat, in vec3 position, in
 vec4 calculate_spot(in spot_light spot, in material mat, in vec3 position, in vec3 normal, in vec3 view_dir,
                     in vec4 tex_colour);
 float calculate_shadow(in sampler2D shadow_map, in vec4 light_space_pos);
+vec3 calc_normal(in vec3 normal, in vec3 tangent, in vec3 binormal, in sampler2D normal_map, in vec2 tex_coord);
+vec4 calculate_direction(in directional_light light, in material mat, in vec3 normal, in vec3 view_dir,
+                         in vec4 tex_colour);
 
+// Directional light for the scene
+uniform directional_light d_light;
+// Point lights for the scene
 uniform point_light points[4];
 // Spot lights being used in the scene
 uniform spot_light spots[2];
@@ -69,6 +75,8 @@ uniform vec3 eye_pos;
 uniform sampler2D tex;
 // Shadow map to sample from
 uniform sampler2D shadow_map;
+// Normal map to sample from
+uniform sampler2D normal_map;
 
 // Incoming position
 layout(location = 0) in vec3 position;
@@ -78,20 +86,27 @@ layout(location = 1) in vec3 normal;
 layout(location = 2) in vec2 tex_coord;
 // Incoming light space position
 layout(location = 3) in vec4 light_space_pos;
+// Incoming binormal
+layout(location = 7) in vec3 binormal;
+// Incoming tangent
+layout(location = 8) in vec3 tangent;
 
 // Outgoing colour
 layout(location = 0) out vec4 colour;
 
 void main() {
-    // *********************************
+    //Set default colour value - Black
     colour = vec4(0.0, 0.0, 0.0, 1.0);
 
     // Calculate shade factor
     float shade = calculate_shadow(shadow_map, light_space_pos);
-    // Calculate view direction, normalize it
+    vec3 new_normal = calc_normal(normal, tangent, binormal, normal_map, tex_coord);
+    // Calculate view direction - normalized
     vec3 view_dir = normalize(eye_pos - position);
     // Sample texture
     vec4 tex_colour = texture(tex, tex_coord);
+
+    colour += calculate_direction(d_light, mat, new_normal, view_dir, tex_colour);
     // Sum point lights
     for (int i = 0; i < points.length(); i++)
     {
@@ -103,9 +118,10 @@ void main() {
     {
         colour += calculate_spot(spots[j], mat, position, normal, view_dir, tex_colour);
     }
+
     // Scale colour by shade
     colour *= shade;
-    //Ensure alpha is 1.0
+    //Alpha = 1
     colour.a = 1;
     // *********************************
 }

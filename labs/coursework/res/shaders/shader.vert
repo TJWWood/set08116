@@ -13,6 +13,7 @@ uniform mat4 lightMVP;
 layout (location = 0) in vec3 position;
 // Incoming normal
 layout(location = 2) in vec3 normal;
+//Incoming binormal
 layout(location = 7) in vec3 binormal;
 // Incoming tangent
 layout(location = 8) in vec3 tangent;
@@ -28,6 +29,7 @@ layout (location = 1) out vec3 transformed_normal;
 layout (location = 2) out vec2 tex_coord_out;
 // Outgoing position in light space
 layout (location = 3) out vec4 vertex_light;
+// Outgoing binormal
 layout(location = 7) out vec3 binormal_out;
 // Outgoing tangent
 layout(location = 8) out vec3 tangent_out;
