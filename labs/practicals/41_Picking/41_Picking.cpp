@@ -44,8 +44,8 @@ bool load_content() {
   tex = texture("textures/checker.png");
 
   // Load in shaders
-  eff.add_shader("27_Texturing_Shader/simple_texture.vert", GL_VERTEX_SHADER);
-  eff.add_shader("27_Texturing_Shader/simple_texture.frag", GL_FRAGMENT_SHADER);
+  eff.add_shader("C:/Users/Thomas/Desktop/set08116/labs/practicals/27_Texturing_Shader/simple_texture.vert", GL_VERTEX_SHADER);
+  eff.add_shader("C:/Users/Thomas/Desktop/set08116/labs/practicals/27_Texturing_Shader/simple_texture.frag", GL_FRAGMENT_SHADER);
   // Build effect
   eff.build();
 
@@ -57,72 +57,84 @@ bool load_content() {
 }
 
 bool update(float delta_time) {
-  if (glfwGetKey(renderer::get_window(), '1'))
-    cam.set_position(vec3(50, 10, 50));
-  if (glfwGetKey(renderer::get_window(), '2'))
-    cam.set_position(vec3(-50, 10, 50));
-  if (glfwGetKey(renderer::get_window(), '3'))
-    cam.set_position(vec3(-50, 10, -50));
-  if (glfwGetKey(renderer::get_window(), '4'))
-    cam.set_position(vec3(50, 10, -50));
+	if (glfwGetKey(renderer::get_window(), '1'))
+		cam.set_position(vec3(50, 10, 50));
+	if (glfwGetKey(renderer::get_window(), '2'))
+		cam.set_position(vec3(-50, 10, 50));
+	if (glfwGetKey(renderer::get_window(), '3'))
+		cam.set_position(vec3(-50, 10, -50));
+	if (glfwGetKey(renderer::get_window(), '4'))
+		cam.set_position(vec3(50, 10, -50));
 
-  // *********************************
-  // Update the camera
-  cam.update(delta_time);
-  // If mouse button pressed get ray and check for intersection
- HEAD
-  if (glfwGetKey(renderer::get_window(), GLFW_MOUSE_BUTTON_1)) {
-	  // Get the mouse position
-	  double xpos;
-	  double ypos;
-	  glfwGetCursorPos(renderer::get_window(), &xpos, &ypos);
-	  // Origin and direction of the ray
-	  glm::vec3 origin;
-	  glm::vec3 direction;
+	// *********************************
+	// Update the camera
+	cam.update(delta_time);
+	// If mouse button pressed get ray and check for intersection
 
-	  // Convert mouse position to ray
-	  screen_pos_to_world_ray(xpos, ypos, renderer::get_screen_width(), renderer::get_screen_height(), cam.get_view(), cam.get_projection(), origin, direction);
-
-	  // *********************************
-	  // Check all the mehes for intersection
-	  for (auto &m : meshes) {
-		  float distance = 0.0f;
-		  if (test_ray_oobb(origin, direction, m.second.get_minimal(), m.second.get_maximal(),
-			  m.second.get_transform().get_transform_matrix(), distance))
-			  cout << m.first << " " << distance << endl;
-	  }
-  }
+	// Get the mouse position
+	double mouse_X;
+	double mouse_Y;
+	glfwGetCursorPos(renderer::get_window(), &mouse_X, &mouse_Y);
 
 
-    // Create two doubles to store mouse Position X and Y
+	// Origin and direction of the ray
+	glm::vec3 origin;
+	glm::vec3 direction;
 
+	// Convert mouse position to ray
+	screen_pos_to_world_ray(mouse_X, mouse_Y, renderer::get_screen_width(), renderer::get_screen_height(), cam.get_view(), cam.get_projection(), origin, direction);
 
-    // Get the mouse position from glfw, store in to the doubles.
+	// *********************************
+	// Check all the mehes for intersection
+	for (auto &m : meshes) {
+		float distance = 0.0f;
+		if (test_ray_oobb(origin, direction, m.second.get_minimal(), m.second.get_maximal(),
+			m.second.get_transform().get_transform_matrix(), distance)) {
+			//cout << m.first << " " << distance << endl;
+			}
+	}
 
-    // Crate two vec3 to store Origin and direction of the ray
-
-
-    // *********************************
-    // Convert mouse position to ray
-    screen_pos_to_world_ray(mouse_X, mouse_Y, renderer::get_screen_width(), renderer::get_screen_height(),
-                            cam.get_view(), cam.get_projection(), origin, direction);
-    // Check all the mehes for intersection
-    for (auto &m : meshes) {
-      float distance = 0.0f;
-      if (test_ray_oobb(origin, direction, m.second.get_minimal(), m.second.get_maximal(),
-                        m.second.get_transform().get_transform_matrix(), distance))
-        cout << m.first << " " << distance << endl;
-    }
-  }//endif
-
- upstream/master
-  return true;
+	return true;
 }
 
 bool render() {
   // Render meshes
   for (auto &e : meshes) {
     auto m = e.second;
+
+	double mouse_X;
+	double mouse_Y;
+	glfwGetCursorPos(renderer::get_window(), &mouse_X, &mouse_Y);
+
+	/*************
+		THIS CODE HERE DETECTS IF AN OBJECT HAS BEEN CLICKED, ALTERS IT AND THEN RESETS IT TO ITS ORIGINAL POSITION AND SIZE
+		THIS WILL BE USED TO DETECT IF AN ENEMY IS SHOT, MAKE THEM EXPLODE AND DISPLAY PARTICLE EFFECTS AND THEN RESPAWN
+		
+		PUTTING THE SCALE CODE IN THE UPDATE METHOD ABOVE WITH PICKING DOES SOMETHING ONCE THEN IT STAYS SCALED - HOWEVER MAY WORK DIFFERENTLY
+		FOR EXPLODING ETC - MUST CHECK
+		***************/
+	// Origin and direction of the ray
+	glm::vec3 origin;
+	glm::vec3 direction;
+
+	// Convert mouse position to ray
+	screen_pos_to_world_ray(mouse_X, mouse_Y, renderer::get_screen_width(), renderer::get_screen_height(), cam.get_view(), cam.get_projection(), origin, direction);
+
+	for (auto &k : meshes) {
+		float distance = 0.0f;
+		if (glfwGetKey(renderer::get_window(), GLFW_KEY_SPACE))
+		{
+			if (test_ray_oobb(origin, direction, k.second.get_minimal(), k.second.get_maximal(), k.second.get_transform().get_transform_matrix(), distance))
+			{
+				cout << k.first << " " << distance << endl;
+				if (k.second.get_transform().get_transform_matrix() == m.get_transform().get_transform_matrix())
+				{
+					m.get_transform().scale = vec3(10.0f, 10.0f, 10.0f);
+				}
+			}
+		}
+	}
+
     // Bind effect
     renderer::bind(eff);
     // Create MVP matrix
@@ -140,7 +152,6 @@ bool render() {
     // Render mesh
     renderer::render(m);
   }
-
   return true;
 }
 

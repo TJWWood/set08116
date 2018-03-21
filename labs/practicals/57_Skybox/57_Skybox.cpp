@@ -64,24 +64,25 @@ bool render() {
   // Disable depth test,depth mask,face culling
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(GL_FALSE);
-	glCullFace(GL_FALSE);
+	glCullFace(GL_FRONT);
   // Bind skybox effect
 	renderer::bind(sky_eff);
   // Calculate MVP for the skybox
 	auto M = skybox.get_transform().get_transform_matrix();
   	auto V = cam.get_view();
 	auto P = cam.get_projection();
-  // Set MVP matrix uniform
 	auto MVP = P * V * M;
+  // Set MVP matrix uniform
+	glUniformMatrix4fv(eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MVP));
   // Set cubemap uniform
-	glUniform1i(sky_eff.get_uniform_location("cubeMap"), 1);
-
-  // Render skybox
+	glUniform1i(sky_eff.get_uniform_location("cubemap"), 1);
 	renderer::bind(cube_map, 1);
+  // Render skybox
+	renderer::render(skybox);
   // Enable depth test,depth mask,face culling
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(GL_TRUE);
-	glCullFace(GL_TRUE);
+	glCullFace(GL_BACK);
   // *********************************
 
   // Bind effect

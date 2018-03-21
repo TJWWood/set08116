@@ -1,16 +1,13 @@
 #version 440
 
-// Sampler used to get texture colour
-uniform samplerCube cubeMap;
+layout(location = 0) out vec4 colour;
+// Cubemap data
+uniform samplerCube cubemap;
 
-// Incoming texture coordinate
-layout(location = 0) in vec2 tex_coord;
-// Outgoing colour
-layout(location = 0) out vec4 out_colour;
+// Incoming 3D tex_coord
+layout(location = 0) in vec3 tex_coord;
 
-void main() {
-  // *********************************
-  // Set out colour to sampled texture colour
-  out_colour = texture(cubeMap, tex_coord);
-  // *********************************
+void main()
+{
+    colour = texture(cubemap, tex_coord);
 }
