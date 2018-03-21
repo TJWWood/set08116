@@ -83,7 +83,6 @@ bool update(float delta_time) {
 
 	// Convert mouse position to ray
 	screen_pos_to_world_ray(mouse_X, mouse_Y, renderer::get_screen_width(), renderer::get_screen_height(), cam.get_view(), cam.get_projection(), origin, direction);
-
 	// *********************************
 	// Check all the mehes for intersection
 	for (auto &m : meshes) {
