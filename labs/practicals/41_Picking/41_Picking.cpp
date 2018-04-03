@@ -16,6 +16,7 @@ bool load_content() {
 
   // Create scene
   meshes["box"] = mesh(geometry_builder::create_box());
+  meshes["bullet"] = mesh(geometry_builder::create_box());
   meshes["tetra"] = mesh(geometry_builder::create_tetrahedron());
   meshes["pyramid"] = mesh(geometry_builder::create_pyramid());
   meshes["disk"] = mesh(geometry_builder::create_disk(20));
@@ -26,6 +27,9 @@ bool load_content() {
   // Transform objects
   meshes["box"].get_transform().scale = vec3(5.0f, 5.0f, 5.0f);
   meshes["box"].get_transform().translate(vec3(-10.0f, 2.5f, -30.0f));
+  meshes["bullet"].get_transform().scale = vec3(0.5f, 0.0f, 0.5f);
+  meshes["bullet"].get_transform().translate = vec3(0.0f,0.0f,0.0f);
+  meshes["bullet"] = mesh(geometry_builder::create_box());
   meshes["tetra"].get_transform().scale = vec3(4.0f, 4.0f, 4.0f);
   meshes["tetra"].get_transform().translate(vec3(-30.0f, 10.0f, -10.0f));
   meshes["pyramid"].get_transform().scale = vec3(5.0f, 5.0f, 5.0f);
@@ -87,10 +91,16 @@ bool update(float delta_time) {
 	// Check all the mehes for intersection
 	for (auto &m : meshes) {
 		float distance = 0.0f;
-		if (test_ray_oobb(origin, direction, m.second.get_minimal(), m.second.get_maximal(),
-			m.second.get_transform().get_transform_matrix(), distance)) {
-			//cout << m.first << " " << distance << endl;
+		if (glfwGetKey(renderer::get_window(), GLFW_KEY_SPACE))
+		{
+			if (test_ray_oobb(origin, direction, m.second.get_minimal(), m.second.get_maximal(),
+				m.second.get_transform().get_transform_matrix(), distance))
+			{
+				m.second.get_transform().scale = vec3(10.0f, 10.0f, 10.0f);
+				//meshes["bullet"].get_transform().position = origin;
+				//cout << m.first << " " << distance << endl;
 			}
+		}
 	}
 
 	return true;
@@ -123,14 +133,15 @@ bool render() {
 		float distance = 0.0f;
 		if (glfwGetKey(renderer::get_window(), GLFW_KEY_SPACE))
 		{
-			if (test_ray_oobb(origin, direction, k.second.get_minimal(), k.second.get_maximal(), k.second.get_transform().get_transform_matrix(), distance))
-			{
-				cout << k.first << " " << distance << endl;
-				if (k.second.get_transform().get_transform_matrix() == m.get_transform().get_transform_matrix())
-				{
-					m.get_transform().scale = vec3(10.0f, 10.0f, 10.0f);
-				}
-			}
+		//	if (test_ray_oobb(origin, direction, k.second.get_minimal(), k.second.get_maximal(), k.second.get_transform().get_transform_matrix(), distance))
+		//	{
+			//	cout << k.first << " " << distance << endl;
+			//	if (k.second.get_transform().get_transform_matrix() == m.get_transform().get_transform_matrix())
+			//	{
+			//		m.get_transform().scale = vec3(10.0f, 10.0f, 10.0f);
+			//		tex = texture("textures/check_6.png");
+			//	}
+			//}
 		}
 	}
 

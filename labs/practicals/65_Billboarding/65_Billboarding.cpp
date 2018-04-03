@@ -96,9 +96,9 @@ bool update(float delta_time) {
 
 bool render() {
   // Simply render the points.  All the work done in the geometry shader
-  renderer::bind(eff);
+  renderer::bind(eff); 
   auto V = cam.get_view();
-  auto P = cam.get_projection();
+  auto P = cam.get_projection();  
   auto MVP = P * V;
   glUniformMatrix4fv(eff.get_uniform_location("MV"), 1, GL_FALSE, value_ptr(V));
   glUniformMatrix4fv(eff.get_uniform_location("P"), 1, GL_FALSE, value_ptr(P));
@@ -108,7 +108,7 @@ bool render() {
 
   renderer::render(geom);
 
-  return true;
+  return true; 
 }
 
 void main() {
