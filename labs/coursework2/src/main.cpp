@@ -20,15 +20,16 @@ vector<spot_light> spots(1);
 float explode_factor = 0.0f;
 string currentMesh = "";
 int playerHP = 100;
+vec3 tempDirection;
 
-double cursor_x = 0.0;
-double cursor_y = 0.0;
+double cursor_x = 0.0f;
+double cursor_y = 0.0f;
 
 shadow_map shadow;
 
 bool initialise()
 {
-	glfwGetCursorPos(renderer::get_window(), &cursor_x, &cursor_y);
+	glfwSetCursorPos(renderer::get_window(), renderer::get_screen_width() / 2 , renderer::get_screen_height() / 2);
 	return true;
 }
 
@@ -39,10 +40,11 @@ bool load_content() {
 
 	// Create scene
 	meshes["plane"] = mesh(geometry_builder::create_plane());
-	meshes["enemy1"] = mesh(geometry_builder::create_sphere());
-	meshes["enemy2"] = mesh(geometry_builder::create_sphere());
-	meshes["enemy3"] = mesh(geometry_builder::create_sphere());
-	meshes["enemy4"] = mesh(geometry_builder::create_sphere());
+	meshes["enemy1"] = mesh(geometry_builder::create_sphere(40, 40));
+	meshes["enemy2"] = mesh(geometry_builder::create_sphere(40, 40));
+	meshes["enemy3"] = mesh(geometry_builder::create_sphere(40, 40));
+	meshes["enemy4"] = mesh(geometry_builder::create_sphere(40, 40));
+	meshes["projectile"] = mesh(geometry_builder::create_sphere());
 
 	// Transform objects
 
@@ -57,6 +59,8 @@ bool load_content() {
 
 	meshes["enemy4"].get_transform().scale = vec3(1.0f, 1.0f, 1.0f);
 	meshes["enemy4"].get_transform().translate(vec3(40.0f, 8.0f, 20.0f));
+
+	meshes["projectile"].get_transform().scale = vec3(0.2f, 0.2f, 0.2f);
 
 	//Set mesh material values
 	meshes["enemy1"].get_material().set_emissive(vec4(0.0f, 0.0f, 0.0f, 1.0f));
@@ -116,9 +120,11 @@ bool load_content() {
 
 
 	// Set free camera properties
-	cam.set_position(vec3(-60.0f, 8.0f, 0.0f));
+	cam.set_position(vec3(0.0f, 8.0f, 0.0f));
 	cam.set_target(vec3(90.0f, 0.0f, 0.0f));
 	cam.set_projection(quarter_pi<float>(), renderer::get_screen_aspect(), 0.1f, 1000.0f);
+
+	meshes["projectile"].get_transform().translate(vec3(cam.get_position()));
 
 	return true;
 }
@@ -130,6 +136,7 @@ bool update(float delta_time) {
 		(static_cast<float>(renderer::get_screen_height()) / static_cast<float>(renderer::get_screen_width()))) /
 		static_cast<float>(renderer::get_screen_height());
 
+	// Update cursor pos
 	double current_x;
 	double current_y;
 	// *********************************
@@ -137,35 +144,19 @@ bool update(float delta_time) {
 	glfwGetCursorPos(renderer::get_window(), &current_x, &current_y);
 	// Calculate delta of cursor positions from last frame
 	double delta_x = current_x - cursor_x;
-	double delta_y = current_y - cursor_y;
+
 	// Multiply deltas by ratios - gets actual change in orientation
 	delta_x = delta_x * ratio_width;
-	delta_y = delta_y * ratio_height * -1;
-	// Rotate cameras by delta
-	cam.rotate(delta_x, delta_y);
-	// delta_y - x-axis rotation
-	delta_y - cam.get_pitch();
-	// delta_x - y-axis rotation
-	delta_x - cam.get_yaw();
-	// Use keyboard to move the camera - WSAD
-	if (glfwGetKey(renderer::get_window(), GLFW_KEY_W)) {
-		cam.move(vec3(0.0f, 0.0f, 1.0f));
-	}
-	if (glfwGetKey(renderer::get_window(), GLFW_KEY_S)) {
-		cam.move(vec3(0.0f, 0.0f, -1.0f));
+
+	if (glfwGetKey(renderer::get_window(), GLFW_KEY_D)) {
+		cam.rotate(0.1f, 0.0f);
 	}
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_A)) {
-		cam.move(vec3(-1.0f, 0.0f, 0.0f));
-	}
-	if (glfwGetKey(renderer::get_window(), GLFW_KEY_D)) {
-		cam.move(vec3(1.0f, 0.0f, 0.0f));
+		cam.rotate(-0.1f, 0.0f);
 	}
 
 	//update camera
 	cam.update(delta_time);
-
-	// Update cursor pos
-	glfwSetCursorPos(renderer::get_window(), cursor_x, cursor_y);
 
 	//Sets the shadow to the main spotlight
 	shadow.light_position = spots[0].get_position();
@@ -182,19 +173,24 @@ bool update(float delta_time) {
 	float distance = 0.0f;
 	// Convert mouse position to ray
 	screen_pos_to_world_ray(cursor_x, cursor_y, renderer::get_screen_width(), renderer::get_screen_height(), cam.get_view(), cam.get_projection(), origin, direction);
+
 	// *********************************
 	// Check all the meshes for intersection
 	for (auto &m : meshes) {
 		if (m.first == "plane")
 		{
 			m.second.get_transform().position = vec3(0.0f, 0.0f, 0.0f); 
-
 		}
-		
+		if (m.first == "projectile")
+		{
+			meshes["projectile"].get_transform().position += tempDirection * delta_time * 100.0f;
+		}
 		m.second.get_transform().position -= vec3(0.1f, 0.0f, 0.0f);
 
 		if (glfwGetKey(renderer::get_window(), GLFW_KEY_SPACE))
 		{
+			tempDirection = direction;
+			meshes["projectile"].get_transform().position = cam.get_position();
 			if (test_ray_oobb(origin, direction, m.second.get_minimal(), m.second.get_maximal(),
 				m.second.get_transform().get_transform_matrix(), distance))
 			{
@@ -203,19 +199,30 @@ bool update(float delta_time) {
 				if (distance <= 5.0f)
 				{
 					explode_factor = 70.0f;
-					playerHP -= 10;
-					m.second.get_transform().position.x = 40.0f;
-					cout << "too close, hurts player and resets";
+					if (m.first == "projectile")
+					{
+						cout << "do nothing";
+					}
+					else
+					{
+						playerHP -= 10;
+						m.second.get_transform().position.x = 40.0f;
+						cout << "too close, hurts player and resets";
+					}
+
 				}
 				else if(distance > 5.0f)
-				{	
-					cout << "Safe distance - Enemy hurt and reset";
-					m.second.get_material().set_diffuse(vec4(1.0f, 0.0f, 0.0f, 1.0f));
-					m.second.get_transform().position.x = 40.0f;
+				{
+					cout << "Safe distance - Enemy hurt and knocked back";
+					m.second.get_material().set_diffuse(vec4(1.0f, 0.0f, 0.0f, 1.0f));	
+
+					//maybe knock back, maybe don't, maybe only on killing blow
+					//m.second.get_transform().position.x += 2.0f;
+					
 					currentMesh = m.first;
 				}
 			}
-		}
+		}	
 		explode_factor -= 0.1f;
 	}
 
@@ -310,7 +317,7 @@ bool render() {
 		renderer::render(m);
 
 		if (e.first == currentMesh)
-		{
+		{		
 			renderer::bind(explode_eff);
 			glUniformMatrix4fv(explode_eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MVP));
 			glUniform1f(explode_eff.get_uniform_location("explode_factor"), explode_factor);
