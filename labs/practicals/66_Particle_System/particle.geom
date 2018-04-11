@@ -27,10 +27,10 @@ void main() {
 
 
   // Output data
-
-
+  position_out = new_pos;
+  velocity_out = velocity[0];
   // Emit vertex and end primitive
-
-
+  EmitVertex();
+  EndPrimitive();
   // *********************************
 }

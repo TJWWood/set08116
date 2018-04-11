@@ -41,26 +41,26 @@ bool load_content() {
   eff.build();
 
   // Load in shaders
-  compute_eff.add_shader("67_Compute_Shader/particle.comp", GL_COMPUTE_SHADER);
-  compute_eff.build();
+  compute_eff.add_shader("68_Smoke_Effect/particle.comp", GL_COMPUTE_SHADER);
+  compute_eff.build(); 
 
   // a useless vao, but we need it bound or we get errors.
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);
   // *********************************
    //Generate Position Data buffer
-
+  glGenBuffers(1, &G_Position_buffer);
   // Bind as GL_SHADER_STORAGE_BUFFER
-
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, G_Position_buffer);
   // Send Data to GPU, use GL_DYNAMIC_DRAW
-
+  glBufferData(GL_ARRAY_BUFFER, sizeof(positions) * MAX_PARTICLES, positions, GL_DYNAMIC_DRAW);
 
   // Generate Velocity Data buffer
-
+  glGenBuffers(1, &G_Velocity_buffer);
   // Bind as GL_SHADER_STORAGE_BUFFER
-
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, G_Velocity_buffer);
   // Send Data to GPU, use GL_DYNAMIC_DRAW
-
+  glBufferData(GL_ARRAY_BUFFER, sizeof(velocitys) * MAX_PARTICLES, velocitys, GL_DYNAMIC_DRAW);
   // *********************************
    //Unbind
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -132,18 +132,22 @@ bool render() {
 
   // *********************************
   // Bind render effect
-
+  glBindBuffer(GL_ARRAY_BUFFER, G_Position_buffer);
   // Create MV matrix
-
-
-
+  auto M = mat4(1.0f);
+  auto V = cam.get_view();
+  auto MV = V * M;
   // Set the colour uniform
-
+  glUniform4fv(eff.get_uniform_location("colour"), 1, value_ptr(vec4(1.0f, 0.0f, 0.0f, 1.0f)));
   // Set MV, and P matrix uniforms seperatly
-
-
+  glUniformMatrix4fv(
+	  eff.get_uniform_location("MV"),
+	  1,
+	  GL_FALSE,
+	  value_ptr(MV));
+  glUniform4fv(eff.get_uniform_location("P"), 1, value_ptr(cam.get_projection()));
   // Set point_size size uniform to .1f
-
+  glUniform1f(eff.get_uniform_location("point_size"), 0.1f);
   // Bind particle texture
 
 

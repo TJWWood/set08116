@@ -81,13 +81,13 @@ bool load_content()
     }
 
     // Build effects
-    eff.add_shader("..\\resources\\shaders\\colour.vert", GL_VERTEX_SHADER);
-    eff.add_shader("..\\resources\\shaders\\colour.frag", GL_FRAGMENT_SHADER);
-    eff.build();
+    //eff.add_shader("\shaders\colour.vert", GL_VERTEX_SHADER);
+    //eff.add_shader("\shaders\colour.frag", GL_FRAGMENT_SHADER);
+    //eff.build();
 
-    particle_eff.add_shader("particle.vert", GL_VERTEX_SHADER);
-    particle_eff.add_shader("particle.geom", GL_GEOMETRY_SHADER);
-    particle_eff.add_shader("particle.frag", GL_FRAGMENT_SHADER);
+    particle_eff.add_shader("66_Particle_System/particle.vert", GL_VERTEX_SHADER);
+    particle_eff.add_shader("66_Particle_System/particle.geom", GL_GEOMETRY_SHADER);
+    particle_eff.add_shader("66_Particle_System/particle.frag", GL_FRAGMENT_SHADER);
     particle_eff.build();
 
     // Use the particle effect
@@ -231,7 +231,7 @@ bool render()
         GL_FALSE,
         value_ptr(MVP));
     // Set the colour uniform
-    glUniform4fv(eff.get_uniform_location("colour"), 1, value_ptr(vec4(1.0f, 0.0f, 0.0f, 1.0f)));
+    //glUniform4fv(eff.get_uniform_location("colour"), 1, value_ptr(vec4(1.0f, 0.0f, 0.0f, 1.0f)));
 
     // *******************************************
     // Bind the back particle buffer for rendering

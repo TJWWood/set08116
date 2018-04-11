@@ -12,13 +12,13 @@ layout(location = 0) in vec2 tex_coord;
 layout(location = 0) out vec4 colour;
 
 void main() {
-  // *********************************
-  // Sample textures
-
-
-  // Final colour is produce of these two colours
-
-  // Ensure alpha is 1
-
+    // *********************************
+    // Sample textures
+    tex = texture(colour, tex_coord);
+    alpha_map = texture(colour, tex_coord);
+    // Final colour is produce of these two colours
+    colour = tex * alpha_map;
+    // Ensure alpha is 1
+    colour.a = 1.0;
   // *********************************
 }
