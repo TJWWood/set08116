@@ -1,21 +1,37 @@
 #include <glm\glm.hpp>
 #include <graphics_framework.h>
-#include <thread>
 
 using namespace std;
+using namespace std::chrono;
 using namespace graphics_framework;
 using namespace glm;
+
+const unsigned int MAX_PARTICLES = 4096;
+
+vec4 positions[MAX_PARTICLES];
+vec4 velocitys[MAX_PARTICLES];
+
+GLuint G_Position_buffer, G_Velocity_buffer;
+effect smoke_eff;
+effect compute_eff;
+GLuint vao;
+texture smoke_tex;
 
 map<string, mesh> meshes;
 effect eff;
 effect shadow_eff;
 effect explode_eff;
+effect tex_eff;
 
 texture tex;
 free_camera cam;
 vector<point_light> points(4);
 vector<spot_light> spots(1);
 
+frame_buffer frame;
+geometry screen_quad;
+texture mask_tex;
+texture alpha_map;
 
 float explode_factor = 0.0f;
 string currentMesh = "";
@@ -34,6 +50,16 @@ bool initialise()
 }
 
 bool load_content() {
+	// Create frame buffer - use screen width and height
+	frame = frame_buffer(renderer::get_screen_width(), renderer::get_screen_height());
+	// Create screen quad
+	vector<vec3> positions{ vec3(-1.0f, -1.0f, 0.0f), vec3(1.0f, -1.0f, 0.0f), vec3(-1.0f, 1.0f, 0.0f),
+		vec3(1.0f, 1.0f, 0.0f) };
+	vector<vec2> tex_coords{ vec2(0.0, 0.0), vec2(1.0f, 0.0f), vec2(0.0f, 1.0f),
+		vec2(1.0f, 1.0f) };  
+	// *********************************
+	screen_quad.add_buffer(positions, BUFFER_INDEXES::POSITION_BUFFER);
+	screen_quad.add_buffer(tex_coords, BUFFER_INDEXES::TEXTURE_COORDS_0);
 
 	//Initialise a new shadow map
 	shadow = shadow_map(renderer::get_screen_width(), renderer::get_screen_height());
@@ -44,7 +70,7 @@ bool load_content() {
 	meshes["enemy2"] = mesh(geometry_builder::create_sphere(40, 40));
 	meshes["enemy3"] = mesh(geometry_builder::create_sphere(40, 40));
 	meshes["enemy4"] = mesh(geometry_builder::create_sphere(40, 40));
-	meshes["projectile"] = mesh(geometry_builder::create_sphere());
+	meshes["projectile"] = mesh(geometry_builder::create_sphere(40,40));
 
 	// Transform objects
 
@@ -60,7 +86,7 @@ bool load_content() {
 	meshes["enemy4"].get_transform().scale = vec3(1.0f, 1.0f, 1.0f);
 	meshes["enemy4"].get_transform().translate(vec3(40.0f, 8.0f, 20.0f));
 
-	meshes["projectile"].get_transform().scale = vec3(0.2f, 0.2f, 0.2f);
+	meshes["projectile"].get_transform().scale = vec3(0.2f,0.2f,0.2f);
 
 	//Set mesh material values
 	meshes["enemy1"].get_material().set_emissive(vec4(0.0f, 0.0f, 0.0f, 1.0f));
@@ -70,6 +96,8 @@ bool load_content() {
 
 	//Set textures
 	tex = texture("res/textures/brick.jpg");
+	mask_tex = texture("res/textures/checked.gif");
+	alpha_map = texture("res/textures/alpha_map.png");
 
 	//Set values of point lights
 	//red
@@ -113,23 +141,28 @@ bool load_content() {
 	shadow_eff.add_shader("res/shaders/shader.vert", GL_VERTEX_SHADER);
 	shadow_eff.add_shader(frag_shaders, GL_FRAGMENT_SHADER);
 
+	tex_eff.add_shader("res/shaders/simple_texture.vert", GL_VERTEX_SHADER);
+	tex_eff.add_shader("res/shaders/mask.frag", GL_FRAGMENT_SHADER);
+	tex_eff.build();
+
 	// Build effects
 	eff.build();
 	explode_eff.build();
 	shadow_eff.build();
 
-
 	// Set free camera properties
-	cam.set_position(vec3(0.0f, 8.0f, 0.0f));
+	cam.set_position(vec3(-40.0f, 8.0f, 0.0f));
 	cam.set_target(vec3(90.0f, 0.0f, 0.0f));
 	cam.set_projection(quarter_pi<float>(), renderer::get_screen_aspect(), 0.1f, 1000.0f);
 
-	meshes["projectile"].get_transform().translate(vec3(cam.get_position()));
+	meshes["projectile"].get_transform().translate(vec3(0.0f, 8.0f, 0.0f));
+
 
 	return true;
 }
 
 bool update(float delta_time) {
+
 	static double ratio_width = quarter_pi<float>() / static_cast<float>(renderer::get_screen_width());
 	static double ratio_height =
 		(quarter_pi<float>() *
@@ -271,9 +304,6 @@ bool render() {
 	// Set face cull mode to back
 	glCullFace(GL_BACK);
 
-	// Bind main effect
-	renderer::bind(eff);
-
 	//Render all other meshes
 	for (auto &e : meshes)
 	{
@@ -312,21 +342,51 @@ bool render() {
 		renderer::bind(shadow.buffer->get_depth(), 1);
 		glUniform1i(eff.get_uniform_location("shadow_map"), 1);
 
+
 		renderer::bind(eff);
 		// Render geometry
 		renderer::render(m);
-
 		if (e.first == currentMesh)
-		{		
+		{
 			renderer::bind(explode_eff);
 			glUniformMatrix4fv(explode_eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MVP));
 			glUniform1f(explode_eff.get_uniform_location("explode_factor"), explode_factor);
 			renderer::render(m);
 		}
+		renderer::bind(eff);
+		// Render geometry
+		renderer::render(m);
 	}
+
+	// Clear frame
+	renderer::set_render_target(frame);
+	// *********************************
+
+	// Set render target back to the screen
+	renderer::set_render_target();
+	// Bind Tex effect
+	renderer::bind(tex_eff); 
+	// MVP is now the identity matrix
+	M = mat4(1.0f);
+	auto P = cam.get_projection();
+	V = cam.get_view();
+	MVP = P * V * M;
+	// Set MVP matrix uniform
+	glUniformMatrix4fv(tex_eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(M));
+	// Bind texture from frame buffer to TU 0
+	renderer::bind(mask_tex, 0);
+	// Set the tex uniform, 0
+	glUniform1i(tex_eff.get_uniform_location("tex"), 0);
+	// Bind alpha texture to TU, 1
+	renderer::bind(alpha_map, 1);
+	// Set the tex uniform, 1
+	glUniform1i(tex_eff.get_uniform_location("alpha_map"), 1);
+	// Render the screen quad
+	renderer::render(screen_quad);
+	// *********************************
+
 	return true;
 }
-
 void main() {
   // Create application
   app application("Graphics Coursework");

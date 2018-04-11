@@ -100,14 +100,14 @@ bool load_content() {
   // *****************
   // Load in alpha map
   // *****************
-  alpha_map = texture("textures/alpha_map.png");
+  alpha_map = texture("textures/alpha_map.png");  
 
   // Set lighting values
   light.set_ambient_intensity(vec4(0.3f, 0.3f, 0.3f, 1.0f));
   light.set_light_colour(vec4(1.0f, 1.0f, 1.0f, 1.0f));
   light.set_direction(vec3(1.0f, 1.0f, -1.0f));
 
-  // Load in shaders
+  // Load in shaders  
   eff.add_shader("48_Phong_Shading/phong.vert", GL_VERTEX_SHADER);
   eff.add_shader("48_Phong_Shading/phong.frag", GL_FRAGMENT_SHADER);
 
@@ -206,11 +206,11 @@ bool render() {
   // Bind texture from frame buffer to TU 0
   renderer::bind(tex, 0);
   // Set the tex uniform, 0
-  glUniform1i(eff.get_uniform_location("tex"), 0);
+  glUniform1i(tex_eff.get_uniform_location("tex"), 0);
   // Bind alpha texture to TU, 1
   renderer::bind(alpha_map, 1);
   // Set the tex uniform, 1
-  glUniform1i(eff.get_uniform_location("tex"), 1);
+  glUniform1i(tex_eff.get_uniform_location("alpha_map"), 1);
   // Render the screen quad
   renderer::render(screen_quad);
   // *********************************

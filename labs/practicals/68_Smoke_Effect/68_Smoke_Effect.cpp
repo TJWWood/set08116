@@ -5,7 +5,7 @@ using namespace std;
 using namespace std::chrono;
 using namespace graphics_framework;
 using namespace glm;
-
+ 
 // Maximum number of particles
 const unsigned int MAX_PARTICLES = 4096;
 
@@ -34,7 +34,7 @@ bool load_content() {
     velocitys[i] = vec4(0.0f, 0.1f + dist(rand), 0.0f, 0.0f);
   }
   // Load in shaders
-  eff.add_shader("68_Smoke_Effect/smoke.vert", GL_VERTEX_SHADER);
+  eff.add_shader("68_Smoke_Effect/smoke.vert", GL_VERTEX_SHADER);    
   eff.add_shader("68_Smoke_Effect/smoke.frag", GL_FRAGMENT_SHADER);
   eff.add_shader("68_Smoke_Effect/smoke.geom", GL_GEOMETRY_SHADER);
 
@@ -49,19 +49,19 @@ bool load_content() {
   glBindVertexArray(vao);
   // *********************************
    //Generate Position Data buffer
-  glGenBuffers(1, &G_Position_buffer);
+  glGenBuffers(4, &G_Position_buffer);
   // Bind as GL_SHADER_STORAGE_BUFFER
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, G_Position_buffer);
   // Send Data to GPU, use GL_DYNAMIC_DRAW
-  glBufferData(GL_ARRAY_BUFFER, sizeof(positions) * MAX_PARTICLES, positions, GL_DYNAMIC_DRAW);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(G_Position_buffer) * MAX_PARTICLES, positions, GL_DYNAMIC_DRAW);
 
   // Generate Velocity Data buffer
-  glGenBuffers(1, &G_Velocity_buffer);
+  glGenBuffers(5, &G_Velocity_buffer);
   // Bind as GL_SHADER_STORAGE_BUFFER
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, G_Velocity_buffer);
   // Send Data to GPU, use GL_DYNAMIC_DRAW
-  glBufferData(GL_ARRAY_BUFFER, sizeof(velocitys) * MAX_PARTICLES, velocitys, GL_DYNAMIC_DRAW);
-  // *********************************
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(G_Velocity_buffer) * MAX_PARTICLES, velocitys, GL_DYNAMIC_DRAW);
+  // *********************************  
    //Unbind
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
   // Set camera properties
@@ -132,25 +132,26 @@ bool render() {
 
   // *********************************
   // Bind render effect
-  glBindBuffer(GL_ARRAY_BUFFER, G_Position_buffer);
+  renderer::bind(eff);
   // Create MV matrix
-  auto M = mat4(1.0f);
+  auto M = mat4(1.0);
   auto V = cam.get_view();
-  auto MV = V * M;
+  auto MV = V * M; 
+  auto P = cam.get_projection();
   // Set the colour uniform
   glUniform4fv(eff.get_uniform_location("colour"), 1, value_ptr(vec4(1.0f, 0.0f, 0.0f, 1.0f)));
   // Set MV, and P matrix uniforms seperatly
-  glUniformMatrix4fv(
+  glUniformMatrix4fv(  
 	  eff.get_uniform_location("MV"),
 	  1,
-	  GL_FALSE,
+	  GL_FALSE, 
 	  value_ptr(MV));
-  glUniform4fv(eff.get_uniform_location("P"), 1, value_ptr(cam.get_projection()));
+  glUniformMatrix4fv(eff.get_uniform_location("P"), 1, GL_FALSE, value_ptr(P));
   // Set point_size size uniform to .1f
   glUniform1f(eff.get_uniform_location("point_size"), 0.1f);
   // Bind particle texture
-
-
+  renderer::bind(tex, 1);
+  glUniform1i(eff.get_uniform_location("tex"), 1);
   // *********************************
 
   // Bind position buffer as GL_ARRAY_BUFFER
