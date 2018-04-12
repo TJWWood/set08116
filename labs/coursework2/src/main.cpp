@@ -30,12 +30,12 @@ vector<spot_light> spots(1);
 
 frame_buffer frame;
 geometry screen_quad;
-texture mask_tex;
-texture alpha_map;
+texture red_flash;
 
 float explode_factor = 0.0f;
 string currentMesh = "";
 int playerHP = 100;
+bool playerHit = false;
 vec3 tempDirection;
 
 double cursor_x = 0.0f;
@@ -102,6 +102,7 @@ bool load_content() {
 	// *********************************
 	screen_quad.add_buffer(positions, BUFFER_INDEXES::POSITION_BUFFER);
 	screen_quad.add_buffer(tex_coords, BUFFER_INDEXES::TEXTURE_COORDS_0);
+	screen_quad.set_type(GL_TRIANGLE_STRIP);
 
 	//Initialise a new shadow map
 	shadow = shadow_map(renderer::get_screen_width(), renderer::get_screen_height());
@@ -132,14 +133,28 @@ bool load_content() {
 
 	//Set mesh material values
 	meshes["enemy1"].get_material().set_emissive(vec4(0.0f, 0.0f, 0.0f, 1.0f));
-	meshes["enemy1"].get_material().set_diffuse(vec4(1.0f, 0.0f, 0.0f, 1.0f));
+	meshes["enemy1"].get_material().set_diffuse(vec4(0.0f, 0.0f, 1.0f, 1.0f));
 	meshes["enemy1"].get_material().set_specular(vec4(1.0f, 1.0f, 1.0f, 1.0f));
 	meshes["enemy1"].get_material().set_shininess(15.0f);
 
+	meshes["enemy2"].get_material().set_emissive(vec4(0.0f, 0.0f, 0.0f, 1.0f));
+	meshes["enemy2"].get_material().set_diffuse(vec4(0.0f, 0.0f, 1.0f, 1.0f));
+	meshes["enemy2"].get_material().set_specular(vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	meshes["enemy2"].get_material().set_shininess(15.0f);
+
+	meshes["enemy3"].get_material().set_emissive(vec4(0.0f, 0.0f, 0.0f, 1.0f));
+	meshes["enemy3"].get_material().set_diffuse(vec4(0.0f, 0.0f, 1.0f, 1.0f));
+	meshes["enemy3"].get_material().set_specular(vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	meshes["enemy3"].get_material().set_shininess(15.0f);
+
+	meshes["enemy4"].get_material().set_emissive(vec4(0.0f, 0.0f, 0.0f, 1.0f));
+	meshes["enemy4"].get_material().set_diffuse(vec4(0.0f, 0.0f, 1.0f, 1.0f));
+	meshes["enemy4"].get_material().set_specular(vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	meshes["enemy4"].get_material().set_shininess(15.0f);
+
 	//Set textures
 	tex = texture("res/textures/brick.jpg");
-	mask_tex = texture("res/textures/checked.gif");
-	alpha_map = texture("res/textures/alpha_map.png");
+	red_flash = texture("res/textures/red_flash.png");
 
 	//Set values of point lights
 	//red
@@ -184,10 +199,10 @@ bool load_content() {
 	shadow_eff.add_shader(frag_shaders, GL_FRAGMENT_SHADER);
 
 	tex_eff.add_shader("res/shaders/simple_texture.vert", GL_VERTEX_SHADER);
-	tex_eff.add_shader("res/shaders/mask.frag", GL_FRAGMENT_SHADER);
+	tex_eff.add_shader("res/shaders/redflash.frag", GL_FRAGMENT_SHADER);
 	tex_eff.build();
 
-	// Build effects
+	// Build effects   
 	eff.build();
 	explode_eff.build(); 
 	shadow_eff.build();
@@ -224,17 +239,18 @@ bool update(float delta_time) {
 	// *********************************
 	// Get the current cursor position
 	glfwGetCursorPos(renderer::get_window(), &current_x, &current_y);
-	// Calculate delta of cursor positions from last frame
-	double delta_x = current_x - cursor_x;
-
-	// Multiply deltas by ratios - gets actual change in orientation
-	delta_x = delta_x * ratio_width;
 
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_D)) {
 		cam.rotate(0.1f, 0.0f);
 	}
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_A)) {
 		cam.rotate(-0.1f, 0.0f);
+	}
+	if (glfwGetKey(renderer::get_window(), GLFW_KEY_W)) {
+		cam.move(vec3(0.0f, 0.0f, 1.0f));
+	}
+	if (glfwGetKey(renderer::get_window(), GLFW_KEY_S)) {
+		cam.move(vec3(0.0f, 0.0f, -1.0f));
 	}
 
 	//update camera
@@ -269,11 +285,12 @@ bool update(float delta_time) {
 		}
 		m.second.get_transform().position -= vec3(0.1f, 0.0f, 0.0f);
 
-		if (m.second.get_material().get_diffuse().x == 1.0f)
+		if (m.second.get_material().get_diffuse() == vec4(1.0f, 0.0f, 0.0f, 1.0f))
 		{
 			m.second.get_transform().position += vec3(0.1f, 0.0f, 0.0f);
 		}
 
+		
 		if (glfwGetKey(renderer::get_window(), GLFW_KEY_SPACE))
 		{
 			tempDirection = direction;
@@ -283,25 +300,36 @@ bool update(float delta_time) {
 			{
 				explode_factor = 30.0f;
 				cout << distance;
-				if (distance <= 5.0f)
+				if (distance <= 10.0f)
 				{
 					explode_factor = 70.0f;
 					if (m.first == "projectile")
-					{
-						cout << "do nothing";
+					{	
+						cout << "Nothing done";
 					}
 					else
 					{
+						playerHit = true;
 						playerHP -= 10;
 						m.second.get_transform().position.x = 40.0f;
 						cout << "too close, hurts player and resets";
 					}
 
 				}
-				else if(distance > 5.0f)
+				else if(distance > 10.0f)
 				{
-					cout << "Safe distance - Enemy hurt and knocked back";
-					m.second.get_material().set_diffuse(vec4(1.0f, 0.0f, 0.0f, 1.0f));	
+					playerHit = false;
+
+					cout << "Safe distance - Enemy hurt";
+
+					if (m.second.get_material().get_diffuse().z == 1.0f)
+					{
+						m.second.get_material().set_diffuse(vec4(0.0f, 1.0f, 0.0f, 1.0f));
+					}
+					if (m.second.get_material().get_diffuse().y == 1.0f)
+					{
+						m.second.get_material().set_diffuse(vec4(1.0f, 0.0f, 0.0f, 1.0f));
+					}
 					currentMesh = m.first;
 				}
 			}
@@ -347,6 +375,11 @@ bool render() {
 		value_ptr(MVP));                        // Pointer to matrix data
 												// Render mesh
 	renderer::render(m);
+	// *********************************
+	// Set render target back to the screen
+	renderer::set_render_target();
+	// Set face cull mode to back
+	glCullFace(GL_BACK);
 
 	renderer::bind(compute_eff);
 	// Bind data as SSBO
@@ -359,11 +392,6 @@ bool render() {
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 	renderer::bind(eff);
 
-	// *********************************
-	// Set render target back to the screen
-	renderer::set_render_target();
-	// Set face cull mode to back
-	glCullFace(GL_BACK);
 	renderer::set_render_target(frame);
 	// Clear frame
 	renderer::clear();
@@ -419,49 +447,44 @@ bool render() {
 			glUniformMatrix4fv(explode_eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MVP));
 			glUniform1f(explode_eff.get_uniform_location("explode_factor"), explode_factor);
 			renderer::render(m);
-
 		}
-
+		renderer::bind(eff);
 		renderer::render(m);
 	}
 
+	renderer::bind(tex_eff);
 
 	//// *********************************
-
-	// Set render target back to the screen
-	renderer::set_render_target();
-	// Bind Tex effect
-
-	renderer::bind(tex_eff); 
-	// MVP is now the identity matrix
-	M = mat4(1.0f);
-	auto P = cam.get_projection();
-	V = cam.get_view();
-	MVP = P * V * M;
-	// Set MVP matrix uniform
-	glUniformMatrix4fv(tex_eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(M));
-	// Bind texture from frame buffer to TU 0
-	//renderer::bind(mask_tex, 0);
-	// Set the tex uniform, 0
-	glUniform1i(tex_eff.get_uniform_location("tex"), 0);
-	// Bind alpha texture to TU, 1
-	//renderer::bind(alpha_map, 1);
-	// Set the tex uniform, 1
-	glUniform1i(tex_eff.get_uniform_location("alpha_map"), 1);
-	// Render the screen quad
-	renderer::render(screen_quad);
-	//// *********************************
+	if (playerHit == true)
+	{
+		// Set render target back to the screen
+		renderer::set_render_target();
+		// Bind Tex effect
+		renderer::bind(tex_eff);
+		// MVP is now the identity matrix
+		M = mat4(1.0);
+		// Set MVP matrix uniform
+		glUniformMatrix4fv(tex_eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(M));
+		// Bind texture from frame buffer to TU 0
+		renderer::bind(red_flash, 0);
+		// Set the tex uniform, 0
+		glUniform1i(tex_eff.get_uniform_location("tex"), 0);
+		// Render the screen quad
+		renderer::render(screen_quad);
+		playerHit = false;
+	}
 
 	for (auto &q : meshes)
 	{
 		if (q.first == currentMesh)
 		{
 			renderer::bind(smoke_eff);
+			m = q.second;
 			// Create MV matrix
 			M = q.second.get_transform().get_transform_matrix();
 			V = cam.get_view();
 			auto MV = V * M;
-			P = cam.get_projection();
+			auto P = cam.get_projection();
 			// Set the colour uniform
 			glUniform4fv(smoke_eff.get_uniform_location("colour"), 1, value_ptr(vec4(1.0f, 0.0f, 0.0f, 1.0f)));
 			// Set MV, and P matrix uniforms seperatly
@@ -498,9 +521,11 @@ bool render() {
 			glDisableVertexAttribArray(0);
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 			glUseProgram(0);
+
+			renderer::bind(eff);
+			renderer::render(m);
 		}
 	}
-	
 	return true;
 }
 void main() {
