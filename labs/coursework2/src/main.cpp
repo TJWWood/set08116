@@ -6,7 +6,7 @@ using namespace std::chrono;
 using namespace graphics_framework;
 using namespace glm;
 
-const unsigned int MAX_PARTICLES = 4096;
+const unsigned int MAX_PARTICLES = 50000;
 
 vec4 positions[MAX_PARTICLES];
 vec4 velocitys[MAX_PARTICLES];
@@ -50,13 +50,13 @@ bool initialise()
 }
 
 bool load_content() {
-	default_random_engine rand(duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count());
+	default_random_engine rand(duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count()); 
 	uniform_real_distribution<float> dist;
 	smoke_tex = texture("res/textures/smoke.png");
-
+	           
 	for (unsigned int i = 0; i < MAX_PARTICLES; ++i) {
-		positions[i] = vec4(((2.0f * dist(rand)) - 1.0f) / 10.0f, 5.0 * dist(rand), 0.0f, 0.0f);
-		velocitys[i] = vec4(0.0f, 0.1f + dist(rand), 0.0f, 0.0f);
+		positions[i] = vec4(((2.0f * dist(rand)) - 1.0f) / 2.0f, 2.0 * dist(rand), 0.0f, 0.0f);
+		velocitys[i] = vec4(0.2f * dist(rand), 0.2f * -dist(rand), 0.2f * dist(rand), 0.2f * dist(rand));
 	}
 
 	smoke_eff.add_shader("res/shaders/smoke.vert", GL_VERTEX_SHADER);
@@ -189,11 +189,11 @@ bool load_content() {
 
 	// Build effects
 	eff.build();
-	explode_eff.build();
+	explode_eff.build(); 
 	shadow_eff.build();
 
 	// Set free camera properties
-	cam.set_position(vec3(-40.0f, 8.0f, 0.0f));
+	cam.set_position(vec3(0.0f, 8.0f, 0.0f));
 	cam.set_target(vec3(90.0f, 0.0f, 0.0f));
 	cam.set_projection(quarter_pi<float>(), renderer::get_screen_aspect(), 0.1f, 1000.0f);
 
@@ -272,7 +272,6 @@ bool update(float delta_time) {
 		if (m.second.get_material().get_diffuse().x == 1.0f)
 		{
 			m.second.get_transform().position += vec3(0.1f, 0.0f, 0.0f);
-			MAX_PARTICLES - 4096;
 		}
 
 		if (glfwGetKey(renderer::get_window(), GLFW_KEY_SPACE))
@@ -303,12 +302,11 @@ bool update(float delta_time) {
 				{
 					cout << "Safe distance - Enemy hurt and knocked back";
 					m.second.get_material().set_diffuse(vec4(1.0f, 0.0f, 0.0f, 1.0f));	
-					
 					currentMesh = m.first;
 				}
 			}
 		}	
-		explode_factor -= 0.1f;
+		explode_factor -= 0.7f;
 	}
 
 	if (playerHP == 0)
@@ -355,7 +353,7 @@ bool render() {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, G_Position_buffer);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, G_Velocity_buffer);
 	// Dispatch
-	glDispatchCompute(MAX_PARTICLES / 256, 1, 1);
+	glDispatchCompute(MAX_PARTICLES / 128, 1, 1);
 	// Sync, wait for completion
 	glMemoryBarrier(GL_ALL_BARRIER_BITS);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -421,6 +419,7 @@ bool render() {
 			glUniformMatrix4fv(explode_eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(MVP));
 			glUniform1f(explode_eff.get_uniform_location("explode_factor"), explode_factor);
 			renderer::render(m);
+
 		}
 
 		renderer::render(m);
@@ -432,6 +431,7 @@ bool render() {
 	// Set render target back to the screen
 	renderer::set_render_target();
 	// Bind Tex effect
+
 	renderer::bind(tex_eff); 
 	// MVP is now the identity matrix
 	M = mat4(1.0f);
@@ -441,59 +441,66 @@ bool render() {
 	// Set MVP matrix uniform
 	glUniformMatrix4fv(tex_eff.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(M));
 	// Bind texture from frame buffer to TU 0
-	renderer::bind(mask_tex, 0);
+	//renderer::bind(mask_tex, 0);
 	// Set the tex uniform, 0
 	glUniform1i(tex_eff.get_uniform_location("tex"), 0);
 	// Bind alpha texture to TU, 1
-	renderer::bind(alpha_map, 1);
+	//renderer::bind(alpha_map, 1);
 	// Set the tex uniform, 1
 	glUniform1i(tex_eff.get_uniform_location("alpha_map"), 1);
 	// Render the screen quad
 	renderer::render(screen_quad);
 	//// *********************************
 
-	renderer::bind(smoke_eff);
-	// Create MV matrix
-	M = mat4(1.0);
-	V = cam.get_view();
-	auto MV = V * M;
-	P = cam.get_projection();
-	// Set the colour uniform
-	glUniform4fv(smoke_eff.get_uniform_location("colour"), 1, value_ptr(vec4(1.0f, 0.0f, 0.0f, 1.0f)));
-	// Set MV, and P matrix uniforms seperatly
-	glUniformMatrix4fv(
-		smoke_eff.get_uniform_location("MV"),
-		1,
-		GL_FALSE,
-		value_ptr(MV));
-	glUniformMatrix4fv(smoke_eff.get_uniform_location("P"), 1, GL_FALSE, value_ptr(P));
-	// Set point_size size uniform to .1f
-	glUniform1f(smoke_eff.get_uniform_location("point_size"), 0.1f);
-	// Bind particle texture
-	renderer::bind(smoke_tex, 4);
-	glUniform1i(smoke_eff.get_uniform_location("tex"), 4);
-	// *********************************
+	for (auto &q : meshes)
+	{
+		if (q.first == currentMesh)
+		{
+			renderer::bind(smoke_eff);
+			// Create MV matrix
+			M = q.second.get_transform().get_transform_matrix();
+			V = cam.get_view();
+			auto MV = V * M;
+			P = cam.get_projection();
+			// Set the colour uniform
+			glUniform4fv(smoke_eff.get_uniform_location("colour"), 1, value_ptr(vec4(1.0f, 0.0f, 0.0f, 1.0f)));
+			// Set MV, and P matrix uniforms seperatly
+			glUniformMatrix4fv(
+				smoke_eff.get_uniform_location("MV"),
+				1,
+				GL_FALSE,
+				value_ptr(MV));
+			glUniformMatrix4fv(smoke_eff.get_uniform_location("P"), 1, GL_FALSE, value_ptr(P));
+			// Set point_size size uniform to .1f
+			glUniform1f(smoke_eff.get_uniform_location("point_size"), 0.1f);
+			// Bind particle texture
+			renderer::bind(smoke_tex, 4);
+			glUniform1i(smoke_eff.get_uniform_location("tex"), 4);
+			// *********************************
 
-	// Bind position buffer as GL_ARRAY_BUFFER
-	glBindBuffer(GL_ARRAY_BUFFER, G_Position_buffer);
-	// Setup vertex format
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void *)0);
-	// Enable Blending
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	// Disable Depth Mask
-	glDepthMask(GL_FALSE);
-	// Render
-	glDrawArrays(GL_POINTS, 0, MAX_PARTICLES);
-	// Tidy up, enable depth mask
-	glDepthMask(GL_TRUE);
-	// Disable Blend
-	glDisable(GL_BLEND);
-	// Unbind all arrays
-	glDisableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glUseProgram(0);
+			// Bind position buffer as GL_ARRAY_BUFFER
+			glBindBuffer(GL_ARRAY_BUFFER, G_Position_buffer);
+			// Setup vertex format
+			glEnableVertexAttribArray(0);
+			glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void *)0);
+			// Enable Blending
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			// Disable Depth Mask
+			glDepthMask(GL_FALSE);
+			// Render
+			glDrawArrays(GL_POINTS, 0, MAX_PARTICLES);
+			// Tidy up, enable depth mask
+			glDepthMask(GL_TRUE);
+			// Disable Blend
+			glDisable(GL_BLEND);
+			// Unbind all arrays
+			glDisableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glUseProgram(0);
+		}
+	}
+	
 	return true;
 }
 void main() {
