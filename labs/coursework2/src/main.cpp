@@ -50,6 +50,48 @@ bool initialise()
 }
 
 bool load_content() {
+	default_random_engine rand(duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count());
+	uniform_real_distribution<float> dist;
+	smoke_tex = texture("res/textures/smoke.png");
+
+	for (unsigned int i = 0; i < MAX_PARTICLES; ++i) {
+		positions[i] = vec4(((2.0f * dist(rand)) - 1.0f) / 10.0f, 5.0 * dist(rand), 0.0f, 0.0f);
+		velocitys[i] = vec4(0.0f, 0.1f + dist(rand), 0.0f, 0.0f);
+	}
+
+	smoke_eff.add_shader("res/shaders/smoke.vert", GL_VERTEX_SHADER);
+	smoke_eff.add_shader("res/shaders/smoke.frag", GL_FRAGMENT_SHADER);
+	smoke_eff.add_shader("res/shaders/smoke.geom", GL_GEOMETRY_SHADER);
+
+	smoke_eff.build();
+
+	// Load in shaders
+	compute_eff.add_shader("res/shaders/particle.comp", GL_COMPUTE_SHADER);
+	compute_eff.build();
+
+	// a useless vao, but we need it bound or we get errors.
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+	// *********************************
+	//Generate Position Data buffer
+	glGenBuffers(4, &G_Position_buffer);
+	// Bind as GL_SHADER_STORAGE_BUFFER
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, G_Position_buffer);
+	// Send Data to GPU, use GL_DYNAMIC_DRAW
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(G_Position_buffer) * MAX_PARTICLES, positions, GL_DYNAMIC_DRAW);
+
+	// Generate Velocity Data buffer
+	glGenBuffers(5, &G_Velocity_buffer);
+	// Bind as GL_SHADER_STORAGE_BUFFER
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, G_Velocity_buffer);
+	// Send Data to GPU, use GL_DYNAMIC_DRAW
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(G_Velocity_buffer) * MAX_PARTICLES, velocitys, GL_DYNAMIC_DRAW);
+	// *********************************  
+	//Unbind
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+
+
 	// Create frame buffer - use screen width and height
 	frame = frame_buffer(renderer::get_screen_width(), renderer::get_screen_height());
 	// Create screen quad
@@ -162,6 +204,13 @@ bool load_content() {
 }
 
 bool update(float delta_time) {
+	if (delta_time > 10.0f) {
+		delta_time = 10.0f;
+	}
+
+	renderer::bind(compute_eff);
+	glUniform3fv(compute_eff.get_uniform_location("max_dims"), 1, &(vec3(3.0f, 5.0f, 5.0f))[0]);
+	glUniform1f(compute_eff.get_uniform_location("delta_time"), delta_time);
 
 	static double ratio_width = quarter_pi<float>() / static_cast<float>(renderer::get_screen_width());
 	static double ratio_height =
@@ -220,6 +269,12 @@ bool update(float delta_time) {
 		}
 		m.second.get_transform().position -= vec3(0.1f, 0.0f, 0.0f);
 
+		if (m.second.get_material().get_diffuse().x == 1.0f)
+		{
+			m.second.get_transform().position += vec3(0.1f, 0.0f, 0.0f);
+			MAX_PARTICLES - 4096;
+		}
+
 		if (glfwGetKey(renderer::get_window(), GLFW_KEY_SPACE))
 		{
 			tempDirection = direction;
@@ -248,9 +303,6 @@ bool update(float delta_time) {
 				{
 					cout << "Safe distance - Enemy hurt and knocked back";
 					m.second.get_material().set_diffuse(vec4(1.0f, 0.0f, 0.0f, 1.0f));	
-
-					//maybe knock back, maybe don't, maybe only on killing blow
-					//m.second.get_transform().position.x += 2.0f;
 					
 					currentMesh = m.first;
 				}
@@ -298,12 +350,29 @@ bool render() {
 												// Render mesh
 	renderer::render(m);
 
+	renderer::bind(compute_eff);
+	// Bind data as SSBO
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, G_Position_buffer);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, G_Velocity_buffer);
+	// Dispatch
+	glDispatchCompute(MAX_PARTICLES / 256, 1, 1);
+	// Sync, wait for completion
+	glMemoryBarrier(GL_ALL_BARRIER_BITS);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+	renderer::bind(eff);
+
 	// *********************************
 	// Set render target back to the screen
 	renderer::set_render_target();
 	// Set face cull mode to back
 	glCullFace(GL_BACK);
+	renderer::set_render_target(frame);
+	// Clear frame
+	renderer::clear();
+	// Set render target back to the screen
+	renderer::set_render_target();
 
+	renderer::bind(eff);
 	//Render all other meshes
 	for (auto &e : meshes)
 	{
@@ -345,7 +414,7 @@ bool render() {
 
 		renderer::bind(eff);
 		// Render geometry
-		renderer::render(m);
+
 		if (e.first == currentMesh)
 		{
 			renderer::bind(explode_eff);
@@ -353,14 +422,12 @@ bool render() {
 			glUniform1f(explode_eff.get_uniform_location("explode_factor"), explode_factor);
 			renderer::render(m);
 		}
-		renderer::bind(eff);
-		// Render geometry
+
 		renderer::render(m);
 	}
 
-	// Clear frame
-	renderer::set_render_target(frame);
-	// *********************************
+
+	//// *********************************
 
 	// Set render target back to the screen
 	renderer::set_render_target();
@@ -383,8 +450,50 @@ bool render() {
 	glUniform1i(tex_eff.get_uniform_location("alpha_map"), 1);
 	// Render the screen quad
 	renderer::render(screen_quad);
+	//// *********************************
+
+	renderer::bind(smoke_eff);
+	// Create MV matrix
+	M = mat4(1.0);
+	V = cam.get_view();
+	auto MV = V * M;
+	P = cam.get_projection();
+	// Set the colour uniform
+	glUniform4fv(smoke_eff.get_uniform_location("colour"), 1, value_ptr(vec4(1.0f, 0.0f, 0.0f, 1.0f)));
+	// Set MV, and P matrix uniforms seperatly
+	glUniformMatrix4fv(
+		smoke_eff.get_uniform_location("MV"),
+		1,
+		GL_FALSE,
+		value_ptr(MV));
+	glUniformMatrix4fv(smoke_eff.get_uniform_location("P"), 1, GL_FALSE, value_ptr(P));
+	// Set point_size size uniform to .1f
+	glUniform1f(smoke_eff.get_uniform_location("point_size"), 0.1f);
+	// Bind particle texture
+	renderer::bind(smoke_tex, 4);
+	glUniform1i(smoke_eff.get_uniform_location("tex"), 4);
 	// *********************************
 
+	// Bind position buffer as GL_ARRAY_BUFFER
+	glBindBuffer(GL_ARRAY_BUFFER, G_Position_buffer);
+	// Setup vertex format
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void *)0);
+	// Enable Blending
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	// Disable Depth Mask
+	glDepthMask(GL_FALSE);
+	// Render
+	glDrawArrays(GL_POINTS, 0, MAX_PARTICLES);
+	// Tidy up, enable depth mask
+	glDepthMask(GL_TRUE);
+	// Disable Blend
+	glDisable(GL_BLEND);
+	// Unbind all arrays
+	glDisableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glUseProgram(0);
 	return true;
 }
 void main() {
