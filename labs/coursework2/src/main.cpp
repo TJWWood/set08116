@@ -279,9 +279,16 @@ bool update(float delta_time) {
 		{
 			m.second.get_transform().position = vec3(0.0f, 0.0f, 0.0f); 
 		}
-		if (m.first == "projectile")
+		else if (m.first == "projectile")
 		{
 			meshes["projectile"].get_transform().position += tempDirection * delta_time * 100.0f;
+		}
+		else if (m.first == "enemy1" || m.first == "enemy2" || m.first == "enemy3" || m.first == "enemy4")
+		{
+			if (m.second.get_transform().position.x <= -40.0f)
+			{
+				m.second.get_transform().position.x = 40.0f;
+			}
 		}
 		m.second.get_transform().position -= vec3(0.1f, 0.0f, 0.0f);
 
