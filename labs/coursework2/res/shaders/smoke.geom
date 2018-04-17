@@ -8,7 +8,6 @@ layout(triangle_strip, max_vertices = 4) out;
 
 layout(location = 0) in float height[];
 
-// Let's use this syntax for a change
 out VertexData {
   vec4 colour;
   vec2 tex_coord;
@@ -20,12 +19,12 @@ void main() {
 
   // fire temperature
   float temp = clamp(2.0 / (2.0 / (height[0])), 0.0, 1.0);
-  // scale between white and red
+  // scale between orange and black
   vec4 fire_colour = mix(vec4(0.88, .35, 0., 1.),vec4(0), temp);
-  // and then between red and black
+  // and then between the previous mix and more black
   fire_colour = mix(fire_colour, vec4(0), height[0] - 1.0);
   // fade smoke out near top
-  fire_colour.a = clamp((height[0] + 2.0) , 0.0, 1.0);
+  fire_colour.a = clamp((2.0 - height[0]) , 0.0, 1.0);
 
   // Expand point to 4 verts
   //point VA (-0.5, -0.5)

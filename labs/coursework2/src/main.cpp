@@ -50,20 +50,16 @@ bool initialise()
 }
 
 bool load_content() {
+
+	//random distribution and generation and movement of smoke particles
 	default_random_engine rand(duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count()); 
 	uniform_real_distribution<float> dist;
 	smoke_tex = texture("res/textures/smoke.png");
 	           
 	for (unsigned int i = 0; i < MAX_PARTICLES; ++i) {
 		positions[i] = vec4(((2.0f * dist(rand)) - 1.0f) / 2.0f, 2.0 * dist(rand), 0.0f, 0.0f);
-		velocitys[i] = vec4(0.2f * dist(rand), 0.2f * -dist(rand), 0.2f * dist(rand), 0.2f * dist(rand));
+		velocitys[i] = vec4(0.2f * dist(rand), 0.2f * dist(rand), 0.2f * dist(rand), 0.2f * dist(rand)); 
 	}
-
-	smoke_eff.add_shader("res/shaders/smoke.vert", GL_VERTEX_SHADER);
-	smoke_eff.add_shader("res/shaders/smoke.frag", GL_FRAGMENT_SHADER);
-	smoke_eff.add_shader("res/shaders/smoke.geom", GL_GEOMETRY_SHADER);
-
-	smoke_eff.build();
 
 	// Load in shaders
 	compute_eff.add_shader("res/shaders/particle.comp", GL_COMPUTE_SHADER);
@@ -198,20 +194,27 @@ bool load_content() {
 	shadow_eff.add_shader("res/shaders/shader.vert", GL_VERTEX_SHADER);
 	shadow_eff.add_shader(frag_shaders, GL_FRAGMENT_SHADER);
 
+	//load shaders for damage flash
 	tex_eff.add_shader("res/shaders/simple_texture.vert", GL_VERTEX_SHADER);
 	tex_eff.add_shader("res/shaders/redflash.frag", GL_FRAGMENT_SHADER);
-	tex_eff.build();
 
+	smoke_eff.add_shader("res/shaders/smoke.vert", GL_VERTEX_SHADER);
+	smoke_eff.add_shader("res/shaders/smoke.frag", GL_FRAGMENT_SHADER);
+	smoke_eff.add_shader("res/shaders/smoke.geom", GL_GEOMETRY_SHADER);
+	
 	// Build effects   
 	eff.build();
 	explode_eff.build(); 
 	shadow_eff.build();
+	tex_eff.build();
+	smoke_eff.build();
 
 	// Set free camera properties
 	cam.set_position(vec3(0.0f, 8.0f, 0.0f));
 	cam.set_target(vec3(90.0f, 0.0f, 0.0f));
 	cam.set_projection(quarter_pi<float>(), renderer::get_screen_aspect(), 0.1f, 1000.0f);
 
+	//default projectile pos
 	meshes["projectile"].get_transform().translate(vec3(0.0f, 8.0f, 0.0f));
 
 
@@ -223,6 +226,7 @@ bool update(float delta_time) {
 		delta_time = 10.0f;
 	}
 
+	//set uniforms for compute eff for smoke eff
 	renderer::bind(compute_eff);
 	glUniform3fv(compute_eff.get_uniform_location("max_dims"), 1, &(vec3(3.0f, 5.0f, 5.0f))[0]);
 	glUniform1f(compute_eff.get_uniform_location("delta_time"), delta_time);
@@ -275,14 +279,17 @@ bool update(float delta_time) {
 	// *********************************
 	// Check all the meshes for intersection
 	for (auto &m : meshes) {
+		//if detected mesh is plane then ensure it doesn't move
 		if (m.first == "plane")
 		{
 			m.second.get_transform().position = vec3(0.0f, 0.0f, 0.0f); 
 		}
+		//if detected mesh is the projectile then move it in the direction of the raycast
 		else if (m.first == "projectile")
 		{
 			meshes["projectile"].get_transform().position += tempDirection * delta_time * 100.0f;
 		}
+		//if detected mesh is one of the enemies then ensure they don't endlessly fly
 		else if (m.first == "enemy1" || m.first == "enemy2" || m.first == "enemy3" || m.first == "enemy4")
 		{
 			if (m.second.get_transform().position.x <= -40.0f)
@@ -290,26 +297,31 @@ bool update(float delta_time) {
 				m.second.get_transform().position.x = 40.0f;
 			}
 		}
+		//move enemies along x-axis
 		m.second.get_transform().position -= vec3(0.1f, 0.0f, 0.0f);
 
+		//if enemy is red then stop it moving
 		if (m.second.get_material().get_diffuse() == vec4(1.0f, 0.0f, 0.0f, 1.0f))
 		{
 			m.second.get_transform().position += vec3(0.1f, 0.0f, 0.0f);
 		}
 
-		
+		//Game Logic Below - Press space to fire at the enemies
 		if (glfwGetKey(renderer::get_window(), GLFW_KEY_SPACE))
 		{
 			tempDirection = direction;
 			meshes["projectile"].get_transform().position = cam.get_position();
+			//check if ray hits anything
 			if (test_ray_oobb(origin, direction, m.second.get_minimal(), m.second.get_maximal(),
 				m.second.get_transform().get_transform_matrix(), distance))
 			{
 				explode_factor = 30.0f;
 				cout << distance;
+				//if distance is less than or equal to 10 units then hurt the player and reset enemy position
 				if (distance <= 10.0f)
 				{
 					explode_factor = 70.0f;
+					//make sure the projectile doesn't count as an enemy (it's default position is where the camera view is so can get caught as false positive
 					if (m.first == "projectile")
 					{	
 						cout << "Nothing done";
@@ -323,12 +335,15 @@ bool update(float delta_time) {
 					}
 
 				}
+				//if more than 10 units away then hurt the enemy
 				else if(distance > 10.0f)
 				{
 					playerHit = false;
 
 					cout << "Safe distance - Enemy hurt";
 
+					//Code does not work fully due to raycast affecting the mesh multiple times on pressing space
+					//Meant to change mesh colour to indicate hurting it, then when it is red it is destroyed
 					if (m.second.get_material().get_diffuse().z == 1.0f)
 					{
 						m.second.get_material().set_diffuse(vec4(0.0f, 1.0f, 0.0f, 1.0f));
@@ -337,13 +352,16 @@ bool update(float delta_time) {
 					{
 						m.second.get_material().set_diffuse(vec4(1.0f, 0.0f, 0.0f, 1.0f));
 					}
+					//sets detected mesh as global var for use in render()
 					currentMesh = m.first;
 				}
 			}
 		}	
+		//causes moving explosion effect
 		explode_factor -= 0.7f;
 	}
 
+	//checks for player death
 	if (playerHP == 0)
 	{
 		cout << "YOU ARE DEAD";
@@ -366,7 +384,7 @@ bool render() {
 	// Bind shadow effect
 	renderer::bind(shadow_eff);
 
-	//Sets m to the teapot mesh for shadowing
+	//Sets m to the mesh for shadowing
 	auto m = meshes["enemy1"];
 	// Create MVP matrix
 	auto M = m.get_transform().get_transform_matrix();
