@@ -16,8 +16,6 @@ void main() {
   // *********************************
   // Sample texture colour
   vec4 col = texture(tex, tex_coord);
-  // Calculate red value
-  //col = dot(col, intensity);
   // Use red as final colour
   // - ensure alpha is 1
   colour = col;

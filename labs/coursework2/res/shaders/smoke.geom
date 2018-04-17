@@ -26,6 +26,7 @@ void main() {
   // fade smoke out near top
   fire_colour.a = clamp((2.0 - height[0]) , 0.0, 1.0);
 
+  //Billboarding
   // Expand point to 4 verts
   //point VA (-0.5, -0.5)
   vec2 va = position.xy + vec2(-0.5f, -0.5f) * point_size;
